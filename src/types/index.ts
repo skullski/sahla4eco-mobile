@@ -35,6 +35,12 @@ export interface MobileOrder {
   wilaya_id?: number;
   commune_id?: number;
   variant_name?: string;
+  order_source?: string;
+  source_platform?: string;
+  order_source_label?: string;
+  source_platform_label?: string;
+  delivery_type?: string;
+  tracking_number?: string;
 }
 
 export interface OrderDetail extends MobileOrder {

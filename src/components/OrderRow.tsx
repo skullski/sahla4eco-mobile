@@ -67,6 +67,21 @@ export function OrderRow({ order, onPress, onConfirm, onCancel }: Props) {
             </View>
           </View>
           <Text style={styles.product} numberOfLines={1}>{order.product_title}</Text>
+          <View style={styles.sourceRow}>
+            {order.order_source_label && (
+              <Text style={styles.sourceBadge}>
+                {order.order_source === 'ai_customer' ? '🤖' : '📝'} {order.order_source_label}
+              </Text>
+            )}
+            {order.source_platform_label && (
+              <Text style={styles.sourceBadge}>
+                {order.source_platform === 'telegram' ? '✈️' : order.source_platform === 'messenger' ? '💬' : '🌐'} {order.source_platform_label}
+              </Text>
+            )}
+            {order.delivery_type === 'desk' && (
+              <Text style={styles.sourceBadge}>🏢 مكتب</Text>
+            )}
+          </View>
           <View style={styles.bottomRow}>
             <Text style={styles.amount}>{formatCurrency(order.total_price, order.currency)}</Text>
             <Text style={styles.time}>{formatTimeAgo(order.created_at)}</Text>
@@ -125,7 +140,14 @@ const styles = StyleSheet.create({
   product: {
     fontSize: FONT.sm,
     color: COLORS.textSecondary,
-    marginBottom: 6,
+    marginBottom: 4,
+  },
+  sourceRow: {
+    flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 6,
+  },
+  sourceBadge: {
+    fontSize: FONT.xs, color: COLORS.textMuted, backgroundColor: COLORS.background,
+    paddingHorizontal: 6, paddingVertical: 2, borderRadius: RADIUS.full, overflow: 'hidden',
   },
   bottomRow: {
     flexDirection: 'row',

@@ -134,6 +134,25 @@ export function OrderDetailScreen({ route, navigation }: any) {
         </View>
       </View>
 
+      {/* Order Info Card */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>مصدر الطلب</Text>
+        <Text style={styles.infoRow}>
+          {order.order_source === 'ai_customer' ? '🤖' : '📝'} {order.order_source_label || order.order_source}
+        </Text>
+        {order.source_platform_label && (
+          <Text style={styles.infoRow}>
+            {order.source_platform === 'telegram' ? '✈️' : order.source_platform === 'messenger' ? '💬' : '🌐'} {order.source_platform_label}
+          </Text>
+        )}
+        {order.delivery_type && (
+          <Text style={styles.infoRow}>🚚 {order.delivery_type === 'desk' ? 'توصيل إلى المكتب' : 'توصيل إلى المنزل'}</Text>
+        )}
+        {order.tracking_number && (
+          <Text style={styles.infoRow}>📦 رقم التتبع: {order.tracking_number}</Text>
+        )}
+      </View>
+
       {/* Timeline */}
       {order.timeline && order.timeline.length > 0 && (
         <View style={styles.card}>
@@ -208,6 +227,7 @@ const styles = StyleSheet.create({
   productName: { fontSize: FONT.lg, fontWeight: '700', color: COLORS.text, marginBottom: 4 },
   variant: { fontSize: FONT.sm, color: COLORS.textSecondary, marginBottom: 4 },
   quantity: { fontSize: FONT.sm, color: COLORS.textSecondary, marginBottom: 8 },
+  infoRow: { fontSize: FONT.sm, color: COLORS.text, marginBottom: 4 },
   priceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTopWidth: 1, borderTopColor: COLORS.borderLight },
   priceLabel: { fontSize: FONT.sm, fontWeight: '600', color: COLORS.textSecondary },
   price: { fontSize: FONT.xl, fontWeight: '800', color: COLORS.text },
