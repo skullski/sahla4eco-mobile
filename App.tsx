@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { NotifProvider } from './src/hooks/usePushNotifications';
@@ -25,14 +25,22 @@ function RootNavigator() {
   }
 
   if (!isAuthenticated) {
-    return authScreen === 'email' ? (
-      <LoginScreen onSwitchToQR={() => setAuthScreen('qr')} />
-    ) : (
-      <QRLoginScreen onSwitchToEmail={() => setAuthScreen('email')} />
+    return (
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
+        {authScreen === 'email' ? (
+          <LoginScreen onSwitchToQR={() => setAuthScreen('qr')} />
+        ) : (
+          <QRLoginScreen onSwitchToEmail={() => setAuthScreen('email')} />
+        )}
+      </SafeAreaView>
     );
   }
 
-  return <AppNavigator />;
+  return (
+    <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+      <AppNavigator />
+    </SafeAreaView>
+  );
 }
 
 export default function App() {

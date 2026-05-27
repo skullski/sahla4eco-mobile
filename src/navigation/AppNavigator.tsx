@@ -2,6 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, Text, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { OrdersScreen } from '../screens/OrdersScreen';
 import { OrderDetailScreen } from '../screens/OrderDetailScreen';
@@ -42,6 +43,7 @@ function OrdersStackScreen() {
 
 export function AppNavigator() {
   const { unreadCount } = useNotif();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tab.Navigator
@@ -51,8 +53,8 @@ export function AppNavigator() {
           backgroundColor: COLORS.card,
           borderTopColor: COLORS.border,
           borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 6,
+          height: 60 + insets.bottom,
+          paddingBottom: insets.bottom + 4,
           paddingTop: 6,
         },
         tabBarActiveTintColor: COLORS.primary,
