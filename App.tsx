@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import * as Updates from 'expo-updates';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { NotifProvider } from './src/hooks/usePushNotifications';
 import { LoginScreen } from './src/screens/LoginScreen';
@@ -44,6 +45,18 @@ function RootNavigator() {
 }
 
 export default function App() {
+  useEffect(() => {
+    (async () => {
+      try {
+        const { isAvailable } = await Updates.checkForUpdateAsync();
+        if (isAvailable) {
+          await Updates.fetchUpdateAsync();
+          await Updates.reloadAsync();
+        }
+      } catch {}
+    })();
+  }, []);
+
   return (
     <SafeAreaProvider>
       <AuthProvider>

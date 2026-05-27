@@ -48,6 +48,9 @@
         "projectId": "b04eda9f-9b33-4353-92c1-177264fd8468"
       }
     },
-    "owner": "sahla4eco-organization"
+    "owner": "sahla4eco-organization",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }
