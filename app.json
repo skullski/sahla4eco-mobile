@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "Sahla4Eco",
+    "slug": "ssahla4eco",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0f172a"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.sahla4eco.mobile",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Scan QR code to log in to your store dashboard.",
+        "NSFaceIDUsageDescription": "Unlock the app with Face ID for quick access."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0f172a"
+      },
+      "package": "com.sahla4eco.mobile",
+      "permissions": [
+        "CAMERA",
+        "VIBRATE",
+        "RECEIVE_BOOT_COMPLETED",
+        "USE_BIOMETRIC"
+      ]
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-notifications",
+      "expo-asset"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "b04eda9f-9b33-4353-92c1-177264fd8468"
+      }
+    },
+    "owner": "sahla4eco-organization"
+  }
+}
