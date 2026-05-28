@@ -35,6 +35,18 @@ export function NotifProvider({ children }: { children: React.ReactNode }) {
 
   const register = useCallback(async () => {
     if (!Device.isDevice) return;
+
+    // Create Android notification channel for sound to work on Android 8+
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'الإشعارات',
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#2563eb',
+        sound: 'default',
+      });
+    }
+
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
     if (existingStatus !== 'granted') {
@@ -67,7 +79,14 @@ export function NotifProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   }, [user]);
 
-  // Register push token when user logs in
+  // Auto-register push on cold start when already logged in
+  useEffect(() => {
+    if (user && !expoPushToken) {
+      register().catch(() => {});
+    }
+  }, [user]);
+
+  // Send push token to server when both user and token are ready
   useEffect(() => {
     if (user && expoPushToken) {
       (async () => {

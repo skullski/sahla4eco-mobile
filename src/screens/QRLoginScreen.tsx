@@ -1,141 +1,152 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Linking,
+} from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useAuth } from '../contexts/AuthContext';
+import { useColors } from '../contexts/ThemeContext';
 import { useNotif } from '../hooks/usePushNotifications';
-import { COLORS, RADIUS, FONT } from '../constants/theme';
+import { RADIUS, FONT, SHADOW } from '../constants/theme';
+import { API_BASE_URL } from '../constants/api';
 
 interface Props {
   onSwitchToEmail: () => void;
 }
 
 export function QRLoginScreen({ onSwitchToEmail }: Props) {
-  const [permission, requestPermission] = useCameraPermissions();
   const { loginQR } = useAuth();
   const { register } = useNotif();
-  const [scanning, setScanning] = useState(true);
+  const colors = useColors();
+  const [permission, requestPermission] = useCameraPermissions();
+  const [scanning, setScanning] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const scanned = useRef(false);
 
   useEffect(() => {
-    if (!permission) {
+    if (permission && !permission.granted) {
       requestPermission();
     }
   }, [permission]);
 
-  const handleScan = async (data: string) => {
-    if (!scanning) return;
-    setScanning(false);
+  const handleBarCodeScanned = async ({ data }: { data: string }) => {
+    if (scanned.current || loading) return;
+    scanned.current = true;
+    setLoading(true);
+
     try {
-      await loginQR(data);
-      register();
+      // The QR code contains a raw token
+      const token = data.trim();
+      if (!token || token.length < 10) {
+        Alert.alert('خطأ', 'رمز QR غير صالح');
+        scanned.current = false;
+        setLoading(false);
+        return;
+      }
+
+      await loginQR(token);
+      register().catch(() => {});
     } catch (e: any) {
-      Alert.alert('فشل تسجيل الدخول', e.message || 'الرمز غير صالح أو منتهي الصلاحية');
-      setScanning(true);
+      Alert.alert('خطأ', e.message || 'فشل تسجيل الدخول برمز QR');
+      scanned.current = false;
+      setLoading(false);
     }
   };
 
   if (!permission) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   if (!permission.granted) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.icon}>📷</Text>
-        <Text style={styles.title}>صلاحية الكاميرا مطلوبة</Text>
-        <Text style={styles.subtitle}>نحتاج إلى صلاحية الكاميرا لمسح رمز QR</Text>
-        <Text style={styles.link} onPress={requestPermission}>منح الصلاحية</Text>
-        <Text style={[styles.link, { marginTop: 20 }]} onPress={onSwitchToEmail}>
-          تسجيل الدخول بالبريد الإلكتروني
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <Text style={[styles.permIcon]}>📷</Text>
+        <Text style={[styles.permTitle, { color: colors.text }]}>الوصول إلى الكاميرا مطلوب</Text>
+        <Text style={[styles.permHint, { color: colors.textSecondary }]}>
+          لمسح رمز QR لتسجيل الدخول
         </Text>
+        <TouchableOpacity
+          style={[styles.permBtn, { backgroundColor: colors.primary }]}
+          onPress={requestPermission}
+        >
+          <Text style={styles.permBtnText}>منح صلاحية الكاميرا</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={onSwitchToEmail} style={styles.switchBtn}>
+          <Text style={[styles.switchText, { color: colors.primary }]}>تسجيل الدخول بالبريد</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <CameraView
-        style={StyleSheet.absoluteFill}
-        facing="back"
-        onBarcodeScanned={scanning ? (r) => handleScan(r.data) : undefined}
-        barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
-      >
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: colors.text }]}>مسح رمز QR</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          افتح رمز QR على موقع Sahla4Eco ومسحه هنا
+        </Text>
+      </View>
+
+      <View style={styles.cameraWrap}>
+        <CameraView
+          style={styles.camera}
+          barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+          onBarcodeScanned={loading ? undefined : handleBarCodeScanned}
+        />
         <View style={styles.overlay}>
-          <View style={styles.frame}>
-            <View style={[styles.corner, styles.topLeft]} />
-            <View style={[styles.corner, styles.topRight]} />
-            <View style={[styles.corner, styles.bottomLeft]} />
-            <View style={[styles.corner, styles.bottomRight]} />
-          </View>
-          <Text style={styles.hint}>ضع رمز QR داخل الإطار</Text>
-          <Text style={styles.switchLink} onPress={onSwitchToEmail}>
-            تسجيل الدخول بالبريد الإلكتروني
-          </Text>
+          <View style={styles.scanFrame} />
         </View>
-      </CameraView>
+        {loading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#fff" />
+            <Text style={styles.loadingText}>جاري تسجيل الدخول...</Text>
+          </View>
+        )}
+      </View>
+
+      <TouchableOpacity onPress={onSwitchToEmail} style={styles.switchBtn}>
+        <Text style={[styles.switchText, { color: colors.primary }]}>تسجيل الدخول بالبريد الإلكتروني</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-    justifyContent: 'center',
-    alignItems: 'center',
+  container: { flex: 1 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
+  header: { alignItems: 'center', paddingTop: 20, paddingBottom: 12 },
+  title: { fontSize: FONT.xl, fontWeight: '800' },
+  subtitle: { fontSize: FONT.sm, marginTop: 4, textAlign: 'center', paddingHorizontal: 32 },
+  cameraWrap: {
+    flex: 1, marginHorizontal: 16, borderRadius: RADIUS.lg, overflow: 'hidden', position: 'relative',
   },
-  icon: { fontSize: 48, marginBottom: 16 },
-  title: {
-    fontSize: FONT.lg,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: FONT.sm,
-    color: '#94a3b8',
-    textAlign: 'center',
-    paddingHorizontal: 40,
-  },
-  link: {
-    fontSize: FONT.md,
-    color: COLORS.primary,
-    fontWeight: '600',
-    marginTop: 12,
-  },
+  camera: { flex: 1 },
   overlay: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  frame: {
-    width: 250,
-    height: 250,
-    position: 'relative',
+  scanFrame: {
+    width: 220, height: 220,
+    borderWidth: 2, borderColor: 'rgba(255,255,255,0.7)',
+    borderRadius: RADIUS.lg,
   },
-  corner: {
-    position: 'absolute',
-    width: 30,
-    height: 30,
-    borderColor: '#fff',
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center', alignItems: 'center',
   },
-  topLeft: { top: 0, left: 0, borderTopWidth: 4, borderLeftWidth: 4 },
-  topRight: { top: 0, right: 0, borderTopWidth: 4, borderRightWidth: 4 },
-  bottomLeft: { bottom: 0, left: 0, borderBottomWidth: 4, borderLeftWidth: 4 },
-  bottomRight: { bottom: 0, right: 0, borderBottomWidth: 4, borderRightWidth: 4 },
-  hint: {
-    color: '#fff',
-    fontSize: FONT.sm,
-    marginTop: 24,
-    opacity: 0.8,
+  loadingText: { color: '#fff', fontSize: FONT.md, fontWeight: '600', marginTop: 12 },
+  permIcon: { fontSize: 56, marginBottom: 12 },
+  permTitle: { fontSize: FONT.lg, fontWeight: '700', marginBottom: 8, textAlign: 'center' },
+  permHint: { fontSize: FONT.sm, textAlign: 'center', marginBottom: 20 },
+  permBtn: {
+    paddingHorizontal: 24, paddingVertical: 12, borderRadius: RADIUS.md,
   },
-  switchLink: {
-    color: COLORS.primary,
-    fontSize: FONT.sm,
-    fontWeight: '600',
-    marginTop: 20,
-  },
+  permBtnText: { color: '#fff', fontSize: FONT.md, fontWeight: '700' },
+  switchBtn: { padding: 16, alignItems: 'center' },
+  switchText: { fontSize: FONT.md, fontWeight: '600' },
 });
