@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { COLORS, RADIUS, FONT, SHADOW, SPACING } from '../constants/theme';
+import { useColors } from '../contexts/ThemeContext';
+import { RADIUS, FONT, SHADOW, SPACING } from '../constants/theme';
 
 interface Props {
   label: string;
@@ -9,12 +10,15 @@ interface Props {
   icon?: string;
 }
 
-export function StatCard({ label, value, color = COLORS.primary, icon }: Props) {
+export function StatCard({ label, value, color: propColor, icon }: Props) {
+  const colors = useColors();
+  const color = propColor || colors.primary;
+
   return (
-    <View style={[styles.card, { borderLeftColor: color, borderLeftWidth: 3 }]}>
+    <View style={[styles.card, { backgroundColor: colors.card, borderLeftColor: color, borderLeftWidth: 3 }]}>
       {icon && <Text style={styles.icon}>{icon}</Text>}
       <Text style={[styles.value, { color }]}>{value}</Text>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
     </View>
   );
 }
@@ -22,7 +26,6 @@ export function StatCard({ label, value, color = COLORS.primary, icon }: Props) 
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    backgroundColor: COLORS.card,
     borderRadius: RADIUS.md,
     padding: SPACING.md,
     ...SHADOW.card,
@@ -30,15 +33,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   icon: { fontSize: 20, marginBottom: 2 },
-  value: {
-    fontSize: FONT.xxl,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  label: {
-    fontSize: FONT.xs,
-    color: COLORS.textSecondary,
-    fontWeight: '600',
-    marginTop: 2,
-  },
+  value: { fontSize: FONT.xxl, fontWeight: '800', letterSpacing: -0.5 },
+  label: { fontSize: FONT.xs, fontWeight: '600', marginTop: 2 },
 });

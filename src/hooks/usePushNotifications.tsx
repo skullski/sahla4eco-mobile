@@ -34,7 +34,11 @@ export function NotifProvider({ children }: { children: React.ReactNode }) {
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
 
   const register = useCallback(async () => {
-    if (!Device.isDevice) return;
+    console.log('[push] register() called, isDevice:', Device.isDevice);
+    if (!Device.isDevice) {
+      console.log('[push] SKIPPED: not a physical device');
+      return;
+    }
 
     // Create Android notification channel for sound to work on Android 8+
     if (Platform.OS === 'android') {
@@ -48,15 +52,25 @@ export function NotifProvider({ children }: { children: React.ReactNode }) {
     }
 
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    console.log('[push] existing permission:', existingStatus);
     let finalStatus = existingStatus;
     if (existingStatus !== 'granted') {
       const { status } = await Notifications.requestPermissionsAsync();
       finalStatus = status;
+      console.log('[push] requested permission result:', finalStatus);
     }
-    if (finalStatus !== 'granted') return;
+    if (finalStatus !== 'granted') {
+      console.log('[push] SKIPPED: permission not granted');
+      return;
+    }
 
-    const tokenData = await Notifications.getExpoPushTokenAsync();
-    setExpoPushToken(tokenData.data);
+    try {
+      const tokenData = await Notifications.getExpoPushTokenAsync();
+      console.log('[push] got token:', tokenData.data);
+      setExpoPushToken(tokenData.data);
+    } catch (e: any) {
+      console.error('[push] getExpoPushTokenAsync FAILED:', e.message);
+    }
   }, []);
 
   const refresh = useCallback(async () => {
@@ -82,7 +96,10 @@ export function NotifProvider({ children }: { children: React.ReactNode }) {
   // Auto-register push on cold start when already logged in
   useEffect(() => {
     if (user && !expoPushToken) {
-      register().catch(() => {});
+      console.log('[push] cold start: user exists but no token, calling register()');
+      register().catch((e: any) => {
+        console.error('[push] cold start register() FAILED:', e.message);
+      });
     }
   }, [user]);
 
@@ -90,9 +107,18 @@ export function NotifProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (user && expoPushToken) {
       (async () => {
+        console.log('[push] sending token to server, user:', user.id, 'token:', expoPushToken);
         const jwt = await getJwt();
-        if (!jwt) return;
-        registerPushToken(jwt, expoPushToken, Platform.OS).catch(() => {});
+        if (!jwt) {
+          console.log('[push] SKIPPED: no JWT available');
+          return;
+        }
+        try {
+          await registerPushToken(jwt, expoPushToken, Platform.OS);
+          console.log('[push] token registered successfully');
+        } catch (e: any) {
+          console.error('[push] registerPushToken FAILED:', e.message);
+        }
       })();
     }
   }, [user, expoPushToken]);

@@ -6,15 +6,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { OrdersScreen } from '../screens/OrdersScreen';
 import { OrderDetailScreen } from '../screens/OrderDetailScreen';
-import { NotificationsScreen } from '../screens/NotificationsScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
-import { useNotif } from '../hooks/usePushNotifications';
-import { COLORS, FONT } from '../constants/theme';
+import { useColors } from '../contexts/ThemeContext';
+import { FONT } from '../constants/theme';
 
 const Tab = createBottomTabNavigator();
 const OrdersStack = createNativeStackNavigator();
 
-function TabIcon({ label, icon, focused }: { label: string; icon: string; focused: boolean }) {
+function TabIcon({ icon, focused }: { icon: string; focused: boolean }) {
   return (
     <View style={tabStyles.iconWrap}>
       <Text style={[tabStyles.icon, focused && tabStyles.iconActive]}>{icon}</Text>
@@ -29,20 +28,28 @@ const tabStyles = StyleSheet.create({
 });
 
 function OrdersStackScreen() {
+  const colors = useColors();
   return (
     <OrdersStack.Navigator screenOptions={{ headerShown: false }}>
       <OrdersStack.Screen name="Orders" component={OrdersScreen} />
       <OrdersStack.Screen
         name="OrderDetail"
         component={OrderDetailScreen}
-        options={{ title: 'تفاصيل الطلب', headerShown: true, headerBackTitle: 'رجوع' }}
+        options={{
+          title: 'تفاصيل الطلب',
+          headerShown: true,
+          headerBackTitle: 'رجوع',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+          headerTitleStyle: { color: colors.text },
+        }}
       />
     </OrdersStack.Navigator>
   );
 }
 
 export function AppNavigator() {
-  const { unreadCount } = useNotif();
+  const colors = useColors();
   const insets = useSafeAreaInsets();
 
   return (
@@ -50,15 +57,15 @@ export function AppNavigator() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: COLORS.card,
-          borderTopColor: COLORS.border,
+          backgroundColor: colors.card,
+          borderTopColor: colors.border,
           borderTopWidth: 1,
           height: 60 + insets.bottom,
           paddingBottom: insets.bottom + 4,
           paddingTop: 6,
         },
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.textMuted,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
         tabBarLabelStyle: {
           fontSize: 10,
           fontWeight: '600',
@@ -70,7 +77,7 @@ export function AppNavigator() {
         component={DashboardScreen}
         options={{
           tabBarLabel: 'الرئيسية',
-          tabBarIcon: ({ focused }) => <TabIcon label="الرئيسية" icon="📊" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon icon="📊" focused={focused} />,
         }}
       />
       <Tab.Screen
@@ -78,17 +85,7 @@ export function AppNavigator() {
         component={OrdersStackScreen}
         options={{
           tabBarLabel: 'الطلبات',
-          tabBarIcon: ({ focused }) => <TabIcon label="الطلبات" icon="📋" focused={focused} />,
-          tabBarBadge: undefined,
-        }}
-      />
-      <Tab.Screen
-        name="NotificationsTab"
-        component={NotificationsScreen}
-        options={{
-          tabBarLabel: 'الإشعارات',
-          tabBarIcon: ({ focused }) => <TabIcon label="الإشعارات" icon="🔔" focused={focused} />,
-          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+          tabBarIcon: ({ focused }) => <TabIcon icon="📋" focused={focused} />,
         }}
       />
       <Tab.Screen
@@ -96,7 +93,7 @@ export function AppNavigator() {
         component={SettingsScreen}
         options={{
           tabBarLabel: 'الإعدادات',
-          tabBarIcon: ({ focused }) => <TabIcon label="الإعدادات" icon="⚙️" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon icon="⚙️" focused={focused} />,
         }}
       />
     </Tab.Navigator>

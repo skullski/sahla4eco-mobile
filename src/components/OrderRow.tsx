@@ -1,8 +1,7 @@
-import React, { useRef } from 'react';
-import {
-  View, Text, StyleSheet, TouchableOpacity, Animated, PanResponder,
-} from 'react-native';
-import { COLORS, RADIUS, FONT, SHADOW } from '../constants/theme';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useColors } from '../contexts/ThemeContext';
+import { RADIUS, FONT, SHADOW } from '../constants/theme';
 import { formatCurrency, formatTimeAgo, getStatusLabel } from '../utils/format';
 import type { MobileOrder } from '../types';
 
@@ -11,83 +10,80 @@ interface Props {
   onPress: () => void;
   onConfirm?: () => void;
   onCancel?: () => void;
+  updating?: boolean;
 }
 
-export function OrderRow({ order, onPress, onConfirm, onCancel }: Props) {
-  const translateX = useRef(new Animated.Value(0)).current;
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 10,
-      onPanResponderMove: (_, g) => {
-        const x = Math.max(-100, Math.min(100, g.dx));
-        translateX.setValue(x);
-      },
-      onPanResponderRelease: (_, g) => {
-        if (g.dx > 60 && onConfirm) {
-          Animated.spring(translateX, { toValue: 80, useNativeDriver: true }).start();
-          onConfirm();
-        } else if (g.dx < -60 && onCancel) {
-          Animated.spring(translateX, { toValue: -80, useNativeDriver: true }).start();
-          onCancel();
-        } else {
-          Animated.spring(translateX, { toValue: 0, useNativeDriver: true }).start();
-        }
-      },
-    })
-  ).current;
+export function OrderRow({ order, onPress, onConfirm, onCancel, updating }: Props) {
+  const colors = useColors();
 
   const statusColor =
-    order.status === 'delivered' || order.status === 'confirmed' ? COLORS.success :
-    order.status === 'cancelled' || order.status === 'returned' || order.status === 'fake' ? COLORS.danger :
-    order.status === 'pending' ? COLORS.warning : COLORS.primary;
+    order.status === 'delivered' || order.status === 'confirmed' ? colors.success :
+    order.status === 'cancelled' || order.status === 'returned' || order.status === 'fake' ? colors.danger :
+    order.status === 'pending' ? colors.warning : colors.primary;
 
   return (
-    <View style={styles.wrapper}>
-      {/* Swipe hint backgrounds */}
-      {onConfirm && (
-        <View style={[styles.swipeAction, styles.confirmBg]}>
-          <Text style={styles.swipeText}>✓ تأكيد</Text>
+    <View style={[styles.wrapper, { backgroundColor: colors.card }]}>
+      <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={styles.touchable}>
+        <View style={styles.topRow}>
+          <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>{order.customer_name}</Text>
+          <View style={[styles.badge, { backgroundColor: statusColor + '20' }]}>
+            <View style={[styles.dot, { backgroundColor: statusColor }]} />
+            <Text style={[styles.status, { color: statusColor }]}>{getStatusLabel(order.status)}</Text>
+          </View>
+        </View>
+        <Text style={[styles.product, { color: colors.textSecondary }]} numberOfLines={1}>{order.product_title}</Text>
+        <View style={styles.sourceRow}>
+          {order.order_source_label && (
+            <Text style={[styles.sourceBadge, { color: colors.textMuted, backgroundColor: colors.background }]}>
+              {order.order_source === 'ai_customer' ? '🤖' : '📝'} {order.order_source_label}
+            </Text>
+          )}
+          {order.source_platform_label && (
+            <Text style={[styles.sourceBadge, { color: colors.textMuted, backgroundColor: colors.background }]}>
+              {order.source_platform === 'telegram' ? '✈️' : order.source_platform === 'messenger' ? '💬' : '🌐'} {order.source_platform_label}
+            </Text>
+          )}
+          {order.delivery_type === 'desk' && (
+            <Text style={[styles.sourceBadge, { color: colors.textMuted, backgroundColor: colors.background }]}>🏢 مكتب</Text>
+          )}
+        </View>
+        <View style={styles.bottomRow}>
+          <Text style={[styles.amount, { color: colors.text }]}>{formatCurrency(order.total_price, order.currency)}</Text>
+          <Text style={[styles.time, { color: colors.textMuted }]}>{formatTimeAgo(order.created_at)}</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* Quick action buttons */}
+      {(onConfirm || onCancel) && (
+        <View style={styles.actions}>
+          {onConfirm && (
+            <TouchableOpacity
+              style={[styles.actionBtn, { backgroundColor: colors.success }]}
+              onPress={onConfirm}
+              disabled={updating}
+            >
+              {updating ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.actionText}>✓ تأكيد</Text>
+              )}
+            </TouchableOpacity>
+          )}
+          {onCancel && (
+            <TouchableOpacity
+              style={[styles.actionBtn, { backgroundColor: colors.danger }]}
+              onPress={onCancel}
+              disabled={updating}
+            >
+              {updating ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.actionText}>✕ إلغاء</Text>
+              )}
+            </TouchableOpacity>
+          )}
         </View>
       )}
-      {onCancel && (
-        <View style={[styles.swipeAction, styles.cancelBg, { right: 0 }]}>
-          <Text style={styles.swipeText}>✕ إلغاء</Text>
-        </View>
-      )}
-      <Animated.View
-        style={[styles.row, { transform: [{ translateX }] }]}
-        {...panResponder.panHandlers}
-      >
-        <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={styles.touchable}>
-          <View style={styles.topRow}>
-            <Text style={styles.name} numberOfLines={1}>{order.customer_name}</Text>
-            <View style={[styles.badge, { backgroundColor: statusColor + '20' }]}>
-              <View style={[styles.dot, { backgroundColor: statusColor }]} />
-              <Text style={[styles.status, { color: statusColor }]}>{getStatusLabel(order.status)}</Text>
-            </View>
-          </View>
-          <Text style={styles.product} numberOfLines={1}>{order.product_title}</Text>
-          <View style={styles.sourceRow}>
-            {order.order_source_label && (
-              <Text style={styles.sourceBadge}>
-                {order.order_source === 'ai_customer' ? '🤖' : '📝'} {order.order_source_label}
-              </Text>
-            )}
-            {order.source_platform_label && (
-              <Text style={styles.sourceBadge}>
-                {order.source_platform === 'telegram' ? '✈️' : order.source_platform === 'messenger' ? '💬' : '🌐'} {order.source_platform_label}
-              </Text>
-            )}
-            {order.delivery_type === 'desk' && (
-              <Text style={styles.sourceBadge}>🏢 مكتب</Text>
-            )}
-          </View>
-          <View style={styles.bottomRow}>
-            <Text style={styles.amount}>{formatCurrency(order.total_price, order.currency)}</Text>
-            <Text style={styles.time}>{formatTimeAgo(order.created_at)}</Text>
-          </View>
-        </TouchableOpacity>
-      </Animated.View>
     </View>
   );
 }
@@ -98,28 +94,16 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderRadius: RADIUS.md,
     overflow: 'hidden',
-  },
-  row: {
-    backgroundColor: COLORS.card,
-    borderRadius: RADIUS.md,
     ...SHADOW.card,
   },
-  touchable: {
-    padding: 14,
-  },
+  touchable: { padding: 14 },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 4,
   },
-  name: {
-    fontSize: FONT.md,
-    fontWeight: '700',
-    color: COLORS.text,
-    flex: 1,
-    marginRight: 8,
-  },
+  name: { fontSize: FONT.md, fontWeight: '700', flex: 1, marginRight: 8 },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -127,61 +111,15 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: RADIUS.full,
   },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginRight: 4,
-  },
-  status: {
-    fontSize: FONT.xs,
-    fontWeight: '600',
-  },
-  product: {
-    fontSize: FONT.sm,
-    color: COLORS.textSecondary,
-    marginBottom: 4,
-  },
-  sourceRow: {
-    flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 6,
-  },
-  sourceBadge: {
-    fontSize: FONT.xs, color: COLORS.textMuted, backgroundColor: COLORS.background,
-    paddingHorizontal: 6, paddingVertical: 2, borderRadius: RADIUS.full, overflow: 'hidden',
-  },
-  bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  amount: {
-    fontSize: FONT.md,
-    fontWeight: '700',
-    color: COLORS.text,
-  },
-  time: {
-    fontSize: FONT.xs,
-    color: COLORS.textMuted,
-  },
-  swipeAction: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    width: 80,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: RADIUS.md,
-  },
-  confirmBg: {
-    left: 0,
-    backgroundColor: COLORS.success,
-  },
-  cancelBg: {
-    backgroundColor: COLORS.danger,
-  },
-  swipeText: {
-    color: '#fff',
-    fontSize: FONT.sm,
-    fontWeight: '700',
-  },
+  dot: { width: 6, height: 6, borderRadius: 3, marginRight: 4 },
+  status: { fontSize: FONT.xs, fontWeight: '600' },
+  product: { fontSize: FONT.sm, marginBottom: 4 },
+  sourceRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 6 },
+  sourceBadge: { fontSize: FONT.xs, paddingHorizontal: 6, paddingVertical: 2, borderRadius: RADIUS.full, overflow: 'hidden' },
+  bottomRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  amount: { fontSize: FONT.md, fontWeight: '700' },
+  time: { fontSize: FONT.xs },
+  actions: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)' },
+  actionBtn: { flex: 1, paddingVertical: 10, alignItems: 'center' },
+  actionText: { color: '#fff', fontSize: FONT.sm, fontWeight: '700' },
 });

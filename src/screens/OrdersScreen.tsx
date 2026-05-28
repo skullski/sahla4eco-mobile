@@ -6,7 +6,8 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
 import { OrderRow } from '../components/OrderRow';
-import { COLORS, RADIUS, FONT } from '../constants/theme';
+import { useColors } from '../contexts/ThemeContext';
+import { RADIUS, FONT } from '../constants/theme';
 import { getStatusLabel } from '../utils/format';
 import { API_BASE_URL } from '../constants/api';
 import type { MobileOrder } from '../types';
@@ -15,10 +16,12 @@ const FILTERS = ['all', 'pending', 'confirmed', 'shipped', 'delivered', 'cancell
 
 export function OrdersScreen({ navigation }: any) {
   const { getAccessToken } = useAuth();
+  const colors = useColors();
   const [orders, setOrders] = useState<MobileOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeFilter, setActiveFilter] = useState('all');
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
 
   const authFetch = useCallback(async (url: string, options?: RequestInit) => {
     const token = await getAccessToken();
@@ -49,69 +52,77 @@ export function OrdersScreen({ navigation }: any) {
     fetchOrders(f);
   };
 
-  const handleConfirm = async (order: MobileOrder) => {
+  const updateStatus = async (order: MobileOrder, status: string) => {
+    setUpdatingId(order.id);
     try {
       const baseUrl = API_BASE_URL;
-      await authFetch(`${baseUrl}/api/mobile/orders/${order.id}/status`, {
+      const token = await getAccessToken();
+      const res = await fetch(`${baseUrl}/api/mobile/orders/${order.id}/status`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'confirmed' }),
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status }),
       });
-      fetchOrders(activeFilter);
-    } catch {}
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'فشل التحديث' }));
+        Alert.alert('خطأ', err.error || 'فشل تحديث حالة الطلب');
+      } else {
+        fetchOrders(activeFilter);
+      }
+    } catch (e: any) {
+      Alert.alert('خطأ', 'تعذر الاتصال بالخادم');
+    } finally {
+      setUpdatingId(null);
+    }
   };
 
-  const handleCancel = async (order: MobileOrder) => {
+  const handleConfirm = (order: MobileOrder) => updateStatus(order, 'confirmed');
+
+  const handleCancel = (order: MobileOrder) => {
     Alert.alert('إلغاء الطلب', `هل أنت متأكد من إلغاء طلب ${order.customer_name}؟`, [
       { text: 'تراجع', style: 'cancel' },
       {
         text: 'إلغاء', style: 'destructive',
-        onPress: async () => {
-          try {
-            const baseUrl = API_BASE_URL;
-            await authFetch(`${baseUrl}/api/mobile/orders/${order.id}/status`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ status: 'cancelled' }),
-            });
-            fetchOrders(activeFilter);
-          } catch {}
-        },
+        onPress: () => updateStatus(order, 'cancelled'),
       },
     ]);
   };
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <View style={[styles.centered, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      {/* Filter Chips */}
-      <View style={styles.filters}>
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={FILTERS}
-          contentContainerStyle={{ paddingHorizontal: 16, gap: 6 }}
-          renderItem={({ item }) => (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.filters, { backgroundColor: colors.background }]}>
+        <View style={styles.filterWrap}>
+          {FILTERS.map((f) => (
             <TouchableOpacity
-              style={[styles.chip, activeFilter === item && styles.chipActive]}
-              onPress={() => handleFilter(item)}
+              key={f}
+              style={[
+                styles.chip,
+                { backgroundColor: colors.card, borderColor: colors.border },
+                activeFilter === f && { backgroundColor: colors.primary, borderColor: colors.primary },
+              ]}
+              onPress={() => handleFilter(f)}
             >
-              <Text style={[styles.chipText, activeFilter === item && styles.chipTextActive]}>
-                {getStatusLabel(item === 'all' ? 'الكل' : item)}
+              <Text
+                style={[
+                  styles.chipText,
+                  { color: colors.textSecondary },
+                  activeFilter === f && { color: '#fff' },
+                ]}
+              >
+                {getStatusLabel(f === 'all' ? 'الكل' : f)}
               </Text>
             </TouchableOpacity>
-          )}
-        />
+          ))}
+        </View>
       </View>
 
-      {/* Orders List */}
       <FlatList
         data={orders}
         keyExtractor={(o) => String(o.id)}
@@ -125,13 +136,14 @@ export function OrdersScreen({ navigation }: any) {
             onPress={() => navigation.navigate('OrderDetail', { id: item.id })}
             onConfirm={item.status === 'pending' ? () => handleConfirm(item) : undefined}
             onCancel={item.status === 'pending' || item.status === 'confirmed' ? () => handleCancel(item) : undefined}
+            updating={updatingId === item.id}
           />
         )}
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>📭</Text>
-            <Text style={styles.emptyText}>لا توجد طلبات</Text>
-            <Text style={styles.emptyHint}>اسحب لأسفل للتحديث</Text>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>لا توجد طلبات</Text>
+            <Text style={[styles.emptyHint, { color: colors.textMuted }]}>اسحب لأسفل للتحديث</Text>
           </View>
         }
       />
@@ -140,25 +152,22 @@ export function OrdersScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background },
-  filters: { paddingVertical: 8, backgroundColor: COLORS.background },
+  container: { flex: 1 },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  filters: { paddingVertical: 8 },
+  filterWrap: {
+    flexDirection: 'row', flexWrap: 'wrap',
+    paddingHorizontal: 16, gap: 6,
+  },
   chip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.card,
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
-  chipActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  chipText: { fontSize: FONT.sm, fontWeight: '600', color: COLORS.textSecondary },
-  chipTextActive: { color: '#fff' },
+  chipText: { fontSize: FONT.xs, fontWeight: '600' },
   emptyState: { alignItems: 'center', paddingVertical: 60 },
   emptyIcon: { fontSize: 56, marginBottom: 12 },
-  emptyText: { fontSize: FONT.lg, fontWeight: '700', color: COLORS.textSecondary },
-  emptyHint: { fontSize: FONT.sm, color: COLORS.textMuted, marginTop: 4 },
+  emptyText: { fontSize: FONT.lg, fontWeight: '700' },
+  emptyHint: { fontSize: FONT.sm, marginTop: 4 },
 });
