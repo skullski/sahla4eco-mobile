@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Switch,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Switch, ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Updates from 'expo-updates';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { RADIUS, FONT, SHADOW } from '../constants/theme';
@@ -10,6 +11,36 @@ import { RADIUS, FONT, SHADOW } from '../constants/theme';
 export function SettingsScreen() {
   const { user, logout } = useAuth();
   const { colors, isDark, preference, setPreference } = useTheme();
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+
+  const checkForUpdate = async () => {
+    setCheckingUpdate(true);
+    try {
+      const update = await Updates.checkForUpdateAsync();
+      if (update.isAvailable) {
+        Alert.alert('تحديث متاح', 'يوجد تحديث جديد. هل تريد تحميله الآن؟', [
+          { text: 'لاحقاً', style: 'cancel' },
+          {
+            text: 'تحديث',
+            onPress: async () => {
+              try {
+                await Updates.fetchUpdateAsync();
+                await Updates.reloadAsync();
+              } catch {
+                Alert.alert('خطأ', 'فشل تحميل التحديث');
+              }
+            },
+          },
+        ]);
+      } else {
+        Alert.alert('أنت تستخدم أحدث إصدار');
+      }
+    } catch {
+      Alert.alert('خطأ', 'تعذر التحقق من التحديثات');
+    } finally {
+      setCheckingUpdate(false);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert('تسجيل الخروج', 'هل أنت متأكد؟', [
@@ -98,6 +129,22 @@ export function SettingsScreen() {
         </View>
       </View>
 
+      {/* Check for Updates */}
+      <TouchableOpacity
+        style={[styles.updateBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+        onPress={checkForUpdate}
+        disabled={checkingUpdate}
+      >
+        {checkingUpdate ? (
+          <ActivityIndicator size="small" color={colors.primary} />
+        ) : (
+          <Ionicons name="refresh-outline" size={18} color={colors.primary} />
+        )}
+        <Text style={[styles.updateBtnText, { color: colors.primary }]}>
+          {checkingUpdate ? 'جاري التحقق...' : 'التحقق من التحديثات'}
+        </Text>
+      </TouchableOpacity>
+
       {/* Logout */}
       <TouchableOpacity
         style={[styles.logoutBtn, { backgroundColor: colors.danger }]}
@@ -140,4 +187,9 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg, padding: 16, marginTop: 4,
   },
   logoutText: { color: '#fff', fontSize: FONT.lg, fontWeight: '700' },
+  updateBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    borderRadius: RADIUS.lg, padding: 14, marginTop: 4, borderWidth: 1,
+  },
+  updateBtnText: { fontSize: FONT.md, fontWeight: '600' },
 });
