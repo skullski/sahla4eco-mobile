@@ -2,106 +2,99 @@ import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Switch,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { RADIUS, FONT, SHADOW } from '../constants/theme';
-import { formatCurrency } from '../utils/format';
-import { API_BASE_URL } from '../constants/api';
 
 export function SettingsScreen() {
-  const { user, logout, getAccessToken } = useAuth();
+  const { user, logout } = useAuth();
   const { colors, isDark, preference, setPreference } = useTheme();
 
   const handleLogout = () => {
     Alert.alert('تسجيل الخروج', 'هل أنت متأكد؟', [
       { text: 'إلغاء', style: 'cancel' },
-      {
-        text: 'خروج', style: 'destructive',
-        onPress: async () => {
-          try { await logout(); } catch {}
-        },
-      },
+      { text: 'خروج', style: 'destructive', onPress: async () => { try { await logout(); } catch {} } },
     ]);
-  };
-
-  const toggleDarkMode = (value: boolean) => {
-    setPreference(value ? 'dark' : 'light');
   };
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
-      {/* Account Info */}
-      <View style={[styles.card, { backgroundColor: colors.card }]}>
-        <Text style={[styles.cardTitle, { color: colors.textMuted }]}>حساب المتجر</Text>
-        <View style={styles.infoRow}>
-          <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>الاسم</Text>
-          <Text style={[styles.infoValue, { color: colors.text }]}>{user?.name || '—'}</Text>
+      {/* Profile Header */}
+      <View style={[styles.profileCard, { backgroundColor: colors.card }]}>
+        <View style={[styles.avatar, { backgroundColor: colors.primaryLight }]}>
+          <Text style={[styles.avatarText, { color: colors.primary }]}>
+            {user?.name?.charAt(0) || '?'}
+          </Text>
         </View>
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-        <View style={styles.infoRow}>
-          <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>البريد الإلكتروني</Text>
-          <Text style={[styles.infoValue, { color: colors.text }]}>{user?.email || '—'}</Text>
+        <View style={styles.profileInfo}>
+          <Text style={[styles.profileName, { color: colors.text }]}>{user?.name || 'المالك'}</Text>
+          <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>{user?.email || ''}</Text>
         </View>
-        {user?.store_name && (
-          <>
-            <View style={[styles.divider, { backgroundColor: colors.border }]} />
-            <View style={styles.infoRow}>
-              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>اسم المتجر</Text>
-              <Text style={[styles.infoValue, { color: colors.text }]}>{user.store_name}</Text>
-            </View>
-          </>
-        )}
-        {user?.phone && (
-          <>
-            <View style={[styles.divider, { backgroundColor: colors.border }]} />
-            <View style={styles.infoRow}>
-              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>الهاتف</Text>
-              <Text style={[styles.infoValue, { color: colors.text }]}>{user.phone}</Text>
-            </View>
-          </>
-        )}
       </View>
+
+      {/* Store */}
+      {user?.store_name && (
+        <View style={[styles.card, { backgroundColor: colors.card }]}>
+          <View style={styles.cardHeader}>
+            <Ionicons name="storefront-outline" size={16} color={colors.textMuted} />
+            <Text style={[styles.cardTitle, { color: colors.textMuted }]}>المتجر</Text>
+          </View>
+          <View style={styles.row}>
+            <Ionicons name="pricetag-outline" size={16} color={colors.textSecondary} />
+            <Text style={[styles.rowLabel, { color: colors.textSecondary }]}>الاسم</Text>
+            <Text style={[styles.rowValue, { color: colors.text }]}>{user.store_name}</Text>
+          </View>
+          {user?.store_slug && (
+            <View style={styles.row}>
+              <Ionicons name="link-outline" size={16} color={colors.textSecondary} />
+              <Text style={[styles.rowLabel, { color: colors.textSecondary }]}>الرابط</Text>
+              <Text style={[styles.rowValue, { color: colors.primary }]}>sahla4eco.com/{user.store_slug}</Text>
+            </View>
+          )}
+        </View>
+      )}
 
       {/* Appearance */}
       <View style={[styles.card, { backgroundColor: colors.card }]}>
-        <Text style={[styles.cardTitle, { color: colors.textMuted }]}>المظهر</Text>
+        <View style={styles.cardHeader}>
+          <Ionicons name="color-palette-outline" size={16} color={colors.textMuted} />
+          <Text style={[styles.cardTitle, { color: colors.textMuted }]}>المظهر</Text>
+        </View>
         <View style={styles.settingRow}>
-          <View style={styles.settingInfo}>
-            <Text style={[styles.settingLabel, { color: colors.text }]}>الوضع الداكن</Text>
-            <Text style={[styles.settingHint, { color: colors.textMuted }]}>
-              {preference === 'system' ? 'يتبع إعدادات الجهاز' : isDark ? 'مفعّل' : 'معطّل'}
-            </Text>
+          <View style={styles.settingLeft}>
+            <Ionicons name={isDark ? 'moon' : 'sunny'} size={18} color={colors.text} />
+            <View style={styles.settingInfo}>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>الوضع الداكن</Text>
+              <Text style={[styles.settingHint, { color: colors.textMuted }]}>
+                {preference === 'system' ? 'يتبع إعدادات الجهاز' : isDark ? 'مفعّل' : 'معطّل'}
+              </Text>
+            </View>
           </View>
           <Switch
             value={isDark}
-            onValueChange={toggleDarkMode}
+            onValueChange={(v) => setPreference(v ? 'dark' : 'light')}
             trackColor={{ false: colors.border, true: colors.primaryLight }}
             thumbColor={isDark ? colors.primary : '#f4f3f4'}
           />
         </View>
       </View>
 
-      {/* Store Link */}
-      {user?.store_slug && (
-        <View style={[styles.card, { backgroundColor: colors.card }]}>
-          <Text style={[styles.cardTitle, { color: colors.textMuted }]}>رابط المتجر</Text>
-          <Text style={[styles.storeUrl, { color: colors.primary }]}>
-            sahla4eco.com/{user.store_slug}
-          </Text>
-        </View>
-      )}
-
       {/* App Info */}
       <View style={[styles.card, { backgroundColor: colors.card }]}>
-        <Text style={[styles.cardTitle, { color: colors.textMuted }]}>عن التطبيق</Text>
-        <View style={styles.infoRow}>
-          <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>الإصدار</Text>
-          <Text style={[styles.infoValue, { color: colors.text }]}>1.0.0</Text>
+        <View style={styles.cardHeader}>
+          <Ionicons name="information-circle-outline" size={16} color={colors.textMuted} />
+          <Text style={[styles.cardTitle, { color: colors.textMuted }]}>عن التطبيق</Text>
         </View>
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-        <View style={styles.infoRow}>
-          <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>المنصة</Text>
-          <Text style={[styles.infoValue, { color: colors.text }]}>Sahla4Eco</Text>
+        <View style={styles.row}>
+          <Ionicons name="phone-portrait-outline" size={16} color={colors.textSecondary} />
+          <Text style={[styles.rowLabel, { color: colors.textSecondary }]}>الإصدار</Text>
+          <Text style={[styles.rowValue, { color: colors.text }]}>1.0.0</Text>
+        </View>
+        <View style={styles.row}>
+          <Ionicons name="cube-outline" size={16} color={colors.textSecondary} />
+          <Text style={[styles.rowLabel, { color: colors.textSecondary }]}>المنصة</Text>
+          <Text style={[styles.rowValue, { color: colors.text }]}>Sahla4Eco</Text>
         </View>
       </View>
 
@@ -110,6 +103,7 @@ export function SettingsScreen() {
         style={[styles.logoutBtn, { backgroundColor: colors.danger }]}
         onPress={handleLogout}
       >
+        <Ionicons name="log-out-outline" size={18} color="#fff" />
         <Text style={styles.logoutText}>تسجيل الخروج</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -119,24 +113,31 @@ export function SettingsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 16, paddingBottom: 40 },
+  profileCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    borderRadius: RADIUS.lg, padding: 16, marginBottom: 10, ...SHADOW.card,
+  },
+  avatar: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { fontSize: FONT.xl, fontWeight: '800' },
+  profileInfo: { flex: 1 },
+  profileName: { fontSize: FONT.lg, fontWeight: '700' },
+  profileEmail: { fontSize: FONT.sm, marginTop: 1 },
   card: {
-    borderRadius: RADIUS.md, padding: 16,
-    marginBottom: 12, ...SHADOW.card,
+    borderRadius: RADIUS.lg, padding: 16, marginBottom: 10, ...SHADOW.card,
   },
-  cardTitle: { fontSize: FONT.xs, fontWeight: '600', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 },
-  infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 },
-  infoLabel: { fontSize: FONT.sm, fontWeight: '500' },
-  infoValue: { fontSize: FONT.md, fontWeight: '600' },
-  divider: { height: 1, marginVertical: 4 },
-  settingRow: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-  },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 },
+  cardTitle: { fontSize: FONT.xs, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.3 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6 },
+  rowLabel: { fontSize: FONT.sm, flex: 1 },
+  rowValue: { fontSize: FONT.sm, fontWeight: '600', textAlign: 'left' },
+  settingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  settingLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
   settingInfo: { flex: 1 },
   settingLabel: { fontSize: FONT.md, fontWeight: '600' },
-  settingHint: { fontSize: FONT.xs, marginTop: 2 },
-  storeUrl: { fontSize: FONT.md, fontWeight: '600', textAlign: 'center', marginTop: 4 },
+  settingHint: { fontSize: FONT.xs, marginTop: 1 },
   logoutBtn: {
-    borderRadius: RADIUS.md, padding: 16, alignItems: 'center', marginTop: 8,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    borderRadius: RADIUS.lg, padding: 16, marginTop: 4,
   },
   logoutText: { color: '#fff', fontSize: FONT.lg, fontWeight: '700' },
 });

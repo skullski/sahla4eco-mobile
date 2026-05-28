@@ -4,6 +4,7 @@ import {
   ActivityIndicator, Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { OrderRow } from '../components/OrderRow';
 import { useColors } from '../contexts/ThemeContext';
@@ -14,13 +15,22 @@ import type { MobileOrder } from '../types';
 
 const FILTERS = ['all', 'pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
 
-export function OrdersScreen({ navigation }: any) {
+const FILTER_ICONS: Record<string, React.ComponentProps<typeof Ionicons>['name']> = {
+  all: 'grid-outline',
+  pending: 'time-outline',
+  confirmed: 'checkmark-circle-outline',
+  shipped: 'car-outline',
+  delivered: 'bag-check-outline',
+  cancelled: 'close-circle-outline',
+};
+
+export function OrdersScreen({ navigation, route }: any) {
   const { getAccessToken } = useAuth();
   const colors = useColors();
   const [orders, setOrders] = useState<MobileOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeFilter, setActiveFilter] = useState('all');
+  const [activeFilter, setActiveFilter] = useState(route?.params?.status || 'all');
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
   const authFetch = useCallback(async (url: string, options?: RequestInit) => {
@@ -44,7 +54,12 @@ export function OrdersScreen({ navigation }: any) {
     }
   }, [authFetch]);
 
-  useFocusEffect(useCallback(() => { fetchOrders(activeFilter); }, [activeFilter, fetchOrders]));
+  useFocusEffect(useCallback(() => {
+    if (route?.params?.status) {
+      setActiveFilter(route.params.status);
+    }
+    fetchOrders(activeFilter);
+  }, [activeFilter, fetchOrders]));
 
   const handleFilter = (f: string) => {
     setActiveFilter(f);
@@ -68,7 +83,7 @@ export function OrdersScreen({ navigation }: any) {
       } else {
         fetchOrders(activeFilter);
       }
-    } catch (e: any) {
+    } catch {
       Alert.alert('خطأ', 'تعذر الاتصال بالخادم');
     } finally {
       setUpdatingId(null);
@@ -80,10 +95,7 @@ export function OrdersScreen({ navigation }: any) {
   const handleCancel = (order: MobileOrder) => {
     Alert.alert('إلغاء الطلب', `هل أنت متأكد من إلغاء طلب ${order.customer_name}؟`, [
       { text: 'تراجع', style: 'cancel' },
-      {
-        text: 'إلغاء', style: 'destructive',
-        onPress: () => updateStatus(order, 'cancelled'),
-      },
+      { text: 'إلغاء', style: 'destructive', onPress: () => updateStatus(order, 'cancelled') },
     ]);
   };
 
@@ -97,11 +109,16 @@ export function OrdersScreen({ navigation }: any) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.filters, { backgroundColor: colors.background }]}>
-        <View style={styles.filterWrap}>
-          {FILTERS.map((f) => (
+      {/* Filters */}
+      <View style={styles.filters}>
+        <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={FILTERS}
+          keyExtractor={(f) => f}
+          contentContainerStyle={styles.filterList}
+          renderItem={({ item: f }) => (
             <TouchableOpacity
-              key={f}
               style={[
                 styles.chip,
                 { backgroundColor: colors.card, borderColor: colors.border },
@@ -109,6 +126,11 @@ export function OrdersScreen({ navigation }: any) {
               ]}
               onPress={() => handleFilter(f)}
             >
+              <Ionicons
+                name={FILTER_ICONS[f] || 'ellipse-outline'}
+                size={14}
+                color={activeFilter === f ? '#fff' : colors.textSecondary}
+              />
               <Text
                 style={[
                   styles.chipText,
@@ -119,16 +141,23 @@ export function OrdersScreen({ navigation }: any) {
                 {getStatusLabel(f === 'all' ? 'الكل' : f)}
               </Text>
             </TouchableOpacity>
-          ))}
-        </View>
+          )}
+        />
+      </View>
+
+      {/* Orders count */}
+      <View style={styles.countRow}>
+        <Text style={[styles.countText, { color: colors.textMuted }]}>
+          {orders.length} {orders.length === 1 ? 'طلب' : 'طلبات'}
+        </Text>
       </View>
 
       <FlatList
         data={orders}
         keyExtractor={(o) => String(o.id)}
-        contentContainerStyle={{ paddingTop: 8, paddingBottom: 20 }}
+        contentContainerStyle={{ paddingTop: 4, paddingBottom: 20 }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchOrders(activeFilter); }} />
+          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchOrders(activeFilter); }} tintColor={colors.primary} />
         }
         renderItem={({ item }) => (
           <OrderRow
@@ -141,8 +170,10 @@ export function OrdersScreen({ navigation }: any) {
         )}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>📭</Text>
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>لا توجد طلبات</Text>
+            <View style={[styles.emptyIconWrap, { backgroundColor: colors.primaryLight }]}>
+              <Ionicons name="receipt-outline" size={32} color={colors.primary} />
+            </View>
+            <Text style={[styles.emptyText, { color: colors.text }]}>لا توجد طلبات</Text>
             <Text style={[styles.emptyHint, { color: colors.textMuted }]}>اسحب لأسفل للتحديث</Text>
           </View>
         }
@@ -154,20 +185,18 @@ export function OrdersScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  filters: { paddingVertical: 8 },
-  filterWrap: {
-    flexDirection: 'row', flexWrap: 'wrap',
-    paddingHorizontal: 16, gap: 6,
-  },
+  filters: { paddingTop: 8 },
+  filterList: { paddingHorizontal: 16, gap: 6 },
   chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: RADIUS.full,
-    borderWidth: 1,
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 14, paddingVertical: 7,
+    borderRadius: RADIUS.full, borderWidth: 1,
   },
   chipText: { fontSize: FONT.xs, fontWeight: '600' },
+  countRow: { paddingHorizontal: 16, paddingVertical: 6 },
+  countText: { fontSize: FONT.xs, fontWeight: '500' },
   emptyState: { alignItems: 'center', paddingVertical: 60 },
-  emptyIcon: { fontSize: 56, marginBottom: 12 },
+  emptyIconWrap: { width: 56, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   emptyText: { fontSize: FONT.lg, fontWeight: '700' },
   emptyHint: { fontSize: FONT.sm, marginTop: 4 },
 });

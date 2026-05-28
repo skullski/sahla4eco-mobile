@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Linking,
+  View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors } from '../contexts/ThemeContext';
 import { useNotif } from '../hooks/usePushNotifications';
-import { RADIUS, FONT, SHADOW } from '../constants/theme';
-import { API_BASE_URL } from '../constants/api';
+import { RADIUS, FONT } from '../constants/theme';
 
 interface Props {
   onSwitchToEmail: () => void;
@@ -63,7 +63,9 @@ export function QRLoginScreen({ onSwitchToEmail }: Props) {
   if (!permission.granted) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <Text style={[styles.permIcon]}>📷</Text>
+        <View style={[styles.permIconWrap, { backgroundColor: colors.primaryLight }]}>
+          <Ionicons name="camera-outline" size={32} color={colors.primary} />
+        </View>
         <Text style={[styles.permTitle, { color: colors.text }]}>الوصول إلى الكاميرا مطلوب</Text>
         <Text style={[styles.permHint, { color: colors.textSecondary }]}>
           لمسح رمز QR لتسجيل الدخول
@@ -107,7 +109,8 @@ export function QRLoginScreen({ onSwitchToEmail }: Props) {
         )}
       </View>
 
-      <TouchableOpacity onPress={onSwitchToEmail} style={styles.switchBtn}>
+      <TouchableOpacity onPress={onSwitchToEmail} style={[styles.switchBtn, { borderTopColor: colors.border }]}>
+        <Ionicons name="mail-outline" size={16} color={colors.primary} />
         <Text style={[styles.switchText, { color: colors.primary }]}>تسجيل الدخول بالبريد الإلكتروني</Text>
       </TouchableOpacity>
     </View>
@@ -140,13 +143,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   loadingText: { color: '#fff', fontSize: FONT.md, fontWeight: '600', marginTop: 12 },
-  permIcon: { fontSize: 56, marginBottom: 12 },
+  permIconWrap: { width: 64, height: 64, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
   permTitle: { fontSize: FONT.lg, fontWeight: '700', marginBottom: 8, textAlign: 'center' },
   permHint: { fontSize: FONT.sm, textAlign: 'center', marginBottom: 20 },
   permBtn: {
     paddingHorizontal: 24, paddingVertical: 12, borderRadius: RADIUS.md,
   },
   permBtnText: { color: '#fff', fontSize: FONT.md, fontWeight: '700' },
-  switchBtn: { padding: 16, alignItems: 'center' },
+  switchBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, padding: 16, borderTopWidth: StyleSheet.hairlineWidth },
   switchText: { fontSize: FONT.md, fontWeight: '600' },
 });

@@ -3,6 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView,
   Platform, ActivityIndicator, Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotif } from '../hooks/usePushNotifications';
 import { useColors } from '../contexts/ThemeContext';
@@ -26,7 +27,7 @@ export function LoginScreen({ onSwitchToQR }: { onSwitchToQR?: () => void }) {
       await login(email.trim(), password.trim());
       register().catch(() => {});
     } catch (e: any) {
-      Alert.alert('خطأ في تسجيل الدخول', e.message || 'تأكد من البريد الإلكتروني وكلمة المرور');
+      Alert.alert('خطأ', e.message || 'تأكد من البريد الإلكتروني وكلمة المرور');
     } finally {
       setLoading(false);
     }
@@ -39,33 +40,39 @@ export function LoginScreen({ onSwitchToQR }: { onSwitchToQR?: () => void }) {
     >
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.logo}>🛒</Text>
+          <View style={[styles.logoWrap, { backgroundColor: colors.primary }]}>
+            <Ionicons name="storefront" size={32} color="#fff" />
+          </View>
           <Text style={[styles.title, { color: colors.text }]}>Sahla4Eco</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>تطبيق المتجر</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>لوحة تحكم المتجر</Text>
         </View>
 
         <View style={styles.form}>
-          <Text style={[styles.label, { color: colors.textSecondary }]}>البريد الإلكتروني</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
-            value={email}
-            onChangeText={setEmail}
-            placeholder="admin@example.com"
-            placeholderTextColor={colors.textMuted}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
+          <View style={[styles.inputWrap, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Ionicons name="mail-outline" size={18} color={colors.textMuted} />
+            <TextInput
+              style={[styles.input, { color: colors.text }]}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="البريد الإلكتروني"
+              placeholderTextColor={colors.textMuted}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          </View>
 
-          <Text style={[styles.label, { color: colors.textSecondary }]}>كلمة المرور</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
-            value={password}
-            onChangeText={setPassword}
-            placeholder="••••••••"
-            placeholderTextColor={colors.textMuted}
-            secureTextEntry
-          />
+          <View style={[styles.inputWrap, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} />
+            <TextInput
+              style={[styles.input, { color: colors.text }]}
+              value={password}
+              onChangeText={setPassword}
+              placeholder="كلمة المرور"
+              placeholderTextColor={colors.textMuted}
+              secureTextEntry
+            />
+          </View>
 
           <TouchableOpacity
             style={[styles.button, { backgroundColor: colors.primary }, loading && styles.buttonDisabled]}
@@ -87,8 +94,8 @@ export function LoginScreen({ onSwitchToQR }: { onSwitchToQR?: () => void }) {
                 <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
               </View>
 
-              <TouchableOpacity style={[styles.qrButton, { borderColor: colors.primary }]} onPress={onSwitchToQR}>
-                <Text style={styles.qrIcon}>📷</Text>
+              <TouchableOpacity style={[styles.qrButton, { borderColor: colors.border }]} onPress={onSwitchToQR}>
+                <Ionicons name="qr-code-outline" size={20} color={colors.primary} />
                 <Text style={[styles.qrButtonText, { color: colors.primary }]}>مسح رمز QR</Text>
               </TouchableOpacity>
             </>
@@ -103,22 +110,21 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
   header: { alignItems: 'center', marginBottom: 40 },
-  logo: { fontSize: 56, marginBottom: 8 },
+  logoWrap: { width: 64, height: 64, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   title: { fontSize: FONT.xxl, fontWeight: '800' },
   subtitle: { fontSize: FONT.sm, marginTop: 4 },
-  form: { gap: 4 },
-  label: { fontSize: FONT.sm, fontWeight: '600', marginBottom: 4, marginTop: 8 },
-  input: { borderRadius: RADIUS.md, padding: 14, fontSize: FONT.md, borderWidth: 1 },
-  button: { borderRadius: RADIUS.md, padding: 16, alignItems: 'center', marginTop: 20, ...SHADOW.button },
+  form: { gap: 10 },
+  inputWrap: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: RADIUS.lg, paddingHorizontal: 14, borderWidth: 1 },
+  input: { flex: 1, paddingVertical: 14, fontSize: FONT.md },
+  button: { borderRadius: RADIUS.lg, padding: 16, alignItems: 'center', marginTop: 10, ...SHADOW.button },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: '#fff', fontSize: FONT.lg, fontWeight: '700' },
-  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
+  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 16 },
   dividerLine: { flex: 1, height: 1 },
   dividerText: { marginHorizontal: 12, fontSize: FONT.sm },
   qrButton: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    padding: 14, borderRadius: RADIUS.md, borderWidth: 2, borderStyle: 'dashed',
+    padding: 14, borderRadius: RADIUS.lg, borderWidth: 1, borderStyle: 'dashed',
   },
-  qrIcon: { fontSize: 18 },
   qrButtonText: { fontSize: FONT.md, fontWeight: '700' },
 });

@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, ActivityIndicator, StyleSheet, useColorScheme } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import * as Updates from 'expo-updates';
 import * as SecureStore from 'expo-secure-store';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
@@ -23,9 +24,11 @@ function RootNavigator() {
   if (isLoading) {
     return (
       <View style={styles.splash}>
-        <Text style={styles.splashLogo}>🛒</Text>
+        <View style={styles.splashIconWrap}>
+          <Ionicons name="storefront" size={36} color="#fff" />
+        </View>
         <Text style={styles.splashTitle}>Sahla4Eco</Text>
-        <ActivityIndicator size="large" color="#3b82f6" style={{ marginTop: 20 }} />
+        <ActivityIndicator size="small" color="rgba(255,255,255,0.5)" style={{ marginTop: 16 }} />
       </View>
     );
   }
@@ -56,9 +59,7 @@ export default function App() {
 
   useEffect(() => {
     SecureStore.getItemAsync(THEME_KEY).then((v) => {
-      if (v === 'light' || v === 'dark' || v === 'system') {
-        setPreference(v);
-      }
+      if (v === 'light' || v === 'dark' || v === 'system') setPreference(v);
       setLoaded(true);
     });
   }, []);
@@ -79,9 +80,7 @@ export default function App() {
           await Updates.fetchUpdateAsync();
           await Updates.reloadAsync();
         }
-      } catch (e) {
-        // OTA update failed - will try again next launch
-      }
+      } catch {}
     })();
   }, []);
 
@@ -105,15 +104,12 @@ export default function App() {
 
 const styles = StyleSheet.create({
   splash: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    flex: 1, justifyContent: 'center', alignItems: 'center',
     backgroundColor: '#0f172a',
   },
-  splashLogo: { fontSize: 64, marginBottom: 12 },
-  splashTitle: {
-    fontSize: FONT.xxl,
-    fontWeight: '800',
-    color: '#fff',
+  splashIconWrap: {
+    width: 72, height: 72, borderRadius: 20, backgroundColor: '#2563eb',
+    alignItems: 'center', justifyContent: 'center', marginBottom: 14,
   },
+  splashTitle: { fontSize: FONT.xl, fontWeight: '800', color: '#fff' },
 });
