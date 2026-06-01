@@ -1,5 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
-import { STORAGE_KEYS } from '../constants/api';
+import { API_BASE_URL, STORAGE_KEYS } from '../constants/api';
 import type { AuthTokens, User } from '../types';
 
 let cachedJwt: string | null = null;
@@ -49,7 +49,7 @@ export async function apiRequest<T>(
   };
   if (jwt) headers['Authorization'] = `Bearer ${jwt}`;
 
-  const res = await fetch(`${STORAGE_KEYS.JWT}${path}`, {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers,
   });

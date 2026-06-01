@@ -1,16 +1,17 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { OrdersScreen } from '../screens/OrdersScreen';
 import { OrderDetailScreen } from '../screens/OrderDetailScreen';
+import { TrackingScreen } from '../screens/TrackingScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
+import { NotificationsScreen } from '../screens/NotificationsScreen';
 import { useColors } from '../contexts/ThemeContext';
 import { useNotif } from '../hooks/usePushNotifications';
-import { FONT } from '../constants/theme';
 
 const Tab = createBottomTabNavigator();
 const OrdersStack = createNativeStackNavigator();
@@ -33,6 +34,7 @@ function OrdersStackScreen() {
           headerShadowVisible: false,
         }}
       />
+      <OrdersStack.Screen name="Tracking" component={TrackingScreen} />
     </OrdersStack.Navigator>
   );
 }
@@ -56,7 +58,7 @@ export function AppNavigator() {
           backgroundColor: colors.card,
           borderTopColor: colors.border,
           borderTopWidth: StyleSheet.hairlineWidth,
-          height: 60 + insets.bottom,
+          height: 58 + insets.bottom,
           paddingBottom: insets.bottom + 4,
           paddingTop: 6,
           elevation: 8,
@@ -87,12 +89,29 @@ export function AppNavigator() {
         }}
       />
       <Tab.Screen
+        name="NotificationsTab"
+        component={NotificationsScreen}
+        options={{
+          tabBarLabel: 'الإشعارات',
+          tabBarIcon: ({ focused, color }) => (
+            <TabIcon name={focused ? 'notifications' : 'notifications-outline'} focused={focused} color={color} />
+          ),
+          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: colors.danger,
+            fontSize: 9,
+            fontWeight: '800',
+            minWidth: 16,
+            height: 16,
+          },
+        }}
+      />
+      <Tab.Screen
         name="SettingsTab"
         component={SettingsScreen}
         options={{
           tabBarLabel: 'الإعدادات',
           tabBarIcon: ({ focused, color }) => <TabIcon name={focused ? 'settings' : 'settings-outline'} focused={focused} color={color} />,
-          tabBarBadge: undefined,
         }}
       />
     </Tab.Navigator>

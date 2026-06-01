@@ -52,8 +52,6 @@
       }
     },
     "owner": "sahla4eco-organization",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    }
+    "runtimeVersion": "1.0.0"
   }
 }

@@ -8,7 +8,8 @@ import * as Updates from 'expo-updates';
 import * as SecureStore from 'expo-secure-store';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { NotifProvider } from './src/hooks/usePushNotifications';
-import { ThemeContext, LIGHT_COLORS, DARK_COLORS } from './src/contexts/ThemeContext';
+import { ThemeContext, useTheme, LIGHT_COLORS, DARK_COLORS } from './src/contexts/ThemeContext';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 import type { ThemePreference } from './src/contexts/ThemeContext';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { QRLoginScreen } from './src/screens/QRLoginScreen';
@@ -19,6 +20,7 @@ const THEME_KEY = 'sahla_theme_pref';
 
 function RootNavigator() {
   const { isAuthenticated, isLoading } = useAuth();
+  const { colors } = useTheme();
   const [authScreen, setAuthScreen] = useState<'email' | 'qr'>('email');
 
   if (isLoading) {
@@ -46,7 +48,7 @@ function RootNavigator() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
       <AppNavigator />
     </SafeAreaView>
   );
@@ -89,14 +91,16 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ThemeContext.Provider value={{ isDark, colors, preference, setPreference: setPref }}>
-        <AuthProvider>
-          <NotifProvider>
-            <NavigationContainer>
-              <RootNavigator />
-              <StatusBar style={isDark ? 'light' : 'dark'} />
-            </NavigationContainer>
-          </NotifProvider>
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <NotifProvider>
+              <NavigationContainer>
+                <RootNavigator />
+                <StatusBar style={isDark ? 'light' : 'dark'} />
+              </NavigationContainer>
+            </NotifProvider>
+          </AuthProvider>
+        </ErrorBoundary>
       </ThemeContext.Provider>
     </SafeAreaProvider>
   );

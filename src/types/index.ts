@@ -58,6 +58,14 @@ export interface StatusTimeline {
   active: boolean;
 }
 
+export interface DeliveryEvent {
+  event_type: string;
+  event_status: string;
+  description?: string;
+  location?: string;
+  created_at: string;
+}
+
 export interface AppNotification {
   id: number;
   type: 'new_order' | 'status_change' | 'low_stock' | 'flagged_order' | 'ai_alert';

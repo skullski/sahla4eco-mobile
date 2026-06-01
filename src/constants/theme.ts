@@ -20,6 +20,14 @@ export const LIGHT_COLORS = {
   border: '#e2e8f0',
   borderLight: '#f1f5f9',
   notification: '#ef4444',
+  gradientStart: '#2563eb',
+  gradientEnd: '#7c3aed',
+  successGradientStart: '#059669',
+  successGradientEnd: '#10b981',
+  warningGradientStart: '#d97706',
+  warningGradientEnd: '#f59e0b',
+  dangerGradientStart: '#dc2626',
+  dangerGradientEnd: '#ef4444',
 };
 
 export const DARK_COLORS: typeof LIGHT_COLORS = {
@@ -44,6 +52,14 @@ export const DARK_COLORS: typeof LIGHT_COLORS = {
   border: '#334155',
   borderLight: '#1e293b',
   notification: '#ef4444',
+  gradientStart: '#3b82f6',
+  gradientEnd: '#8b5cf6',
+  successGradientStart: '#10b981',
+  successGradientEnd: '#34d399',
+  warningGradientStart: '#f59e0b',
+  warningGradientEnd: '#fbbf24',
+  dangerGradientStart: '#ef4444',
+  dangerGradientEnd: '#f87171',
 };
 
 export const COLORS = LIGHT_COLORS;
@@ -74,6 +90,13 @@ export const SHADOW = {
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
+  },
+  lg: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 6,
   },
 };
 

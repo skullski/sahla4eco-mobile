@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity,
-  ActivityIndicator, Alert,
+  ActivityIndicator, Alert, TextInput,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -32,6 +32,7 @@ export function OrdersScreen({ navigation, route }: any) {
   const [refreshing, setRefreshing] = useState(false);
   const [activeFilter, setActiveFilter] = useState(route?.params?.status || 'all');
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [search, setSearch] = useState('');
 
   const authFetch = useCallback(async (url: string, options?: RequestInit) => {
     const token = await getAccessToken();
@@ -99,16 +100,63 @@ export function OrdersScreen({ navigation, route }: any) {
     ]);
   };
 
+  const filteredOrders = useMemo(() => {
+    if (!search.trim()) return orders;
+    const q = search.trim().toLowerCase();
+    return orders.filter(o =>
+      (o.customer_name || '').toLowerCase().includes(q) ||
+      (o.product_title || '').toLowerCase().includes(q) ||
+      String(o.id).includes(q) ||
+      (o.customer_phone || '').includes(q)
+    );
+  }, [orders, search]);
+
   if (loading) {
     return (
       <View style={[styles.centered, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <View style={{ gap: 8, paddingHorizontal: 16, width: '100%' }}>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <View key={i} style={[styles.skeleton, { backgroundColor: colors.card }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={[styles.skelAvatar, { backgroundColor: colors.border }]} />
+                <View style={{ flex: 1, gap: 4 }}>
+                  <View style={[styles.skelLine, { backgroundColor: colors.border, width: '50%' }]} />
+                  <View style={[styles.skelLine, { backgroundColor: colors.border, width: '70%' }]} />
+                </View>
+              </View>
+            </View>
+          ))}
+        </View>
       </View>
     );
   }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Inline header */}
+      <View style={[styles.inlineHeader, { backgroundColor: colors.background }]}>
+        <Text style={[styles.inlineTitle, { color: colors.text }]}>الطلبات</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Tracking')}>
+          <Ionicons name="car-outline" size={20} color={colors.primary} />
+        </TouchableOpacity>
+      </View>
+      {/* Search Bar */}
+      <View style={[styles.searchWrap, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Ionicons name="search-outline" size={16} color={colors.textMuted} />
+        <TextInput
+          style={[styles.searchInput, { color: colors.text }]}
+          value={search}
+          onChangeText={setSearch}
+          placeholder="بحث باسم العميل، المنتج، رقم الطلب..."
+          placeholderTextColor={colors.textMuted}
+        />
+        {search.length > 0 && (
+          <TouchableOpacity onPress={() => setSearch('')}>
+            <Ionicons name="close-circle" size={16} color={colors.textMuted} />
+          </TouchableOpacity>
+        )}
+      </View>
+
       {/* Filters */}
       <View style={styles.filters}>
         <FlatList
@@ -117,43 +165,45 @@ export function OrdersScreen({ navigation, route }: any) {
           data={FILTERS}
           keyExtractor={(f) => f}
           contentContainerStyle={styles.filterList}
-          renderItem={({ item: f }) => (
-            <TouchableOpacity
-              style={[
-                styles.chip,
-                { backgroundColor: colors.card, borderColor: colors.border },
-                activeFilter === f && { backgroundColor: colors.primary, borderColor: colors.primary },
-              ]}
-              onPress={() => handleFilter(f)}
-            >
-              <Ionicons
-                name={FILTER_ICONS[f] || 'ellipse-outline'}
-                size={14}
-                color={activeFilter === f ? '#fff' : colors.textSecondary}
-              />
-              <Text
+          renderItem={({ item: f }) => {
+            const count = f === 'all' ? orders.length : orders.filter(o => o.status === f).length;
+            return (
+              <TouchableOpacity
                 style={[
-                  styles.chipText,
-                  { color: colors.textSecondary },
-                  activeFilter === f && { color: '#fff' },
+                  styles.chip,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                  activeFilter === f && { backgroundColor: colors.primary, borderColor: colors.primary },
                 ]}
+                onPress={() => handleFilter(f)}
               >
-                {getStatusLabel(f === 'all' ? 'الكل' : f)}
-              </Text>
-            </TouchableOpacity>
-          )}
+                <Ionicons
+                  name={FILTER_ICONS[f] || 'ellipse-outline'}
+                  size={12}
+                  color={activeFilter === f ? '#fff' : colors.textSecondary}
+                />
+                <Text
+                  style={[
+                    styles.chipText,
+                    { color: colors.textSecondary },
+                    activeFilter === f && { color: '#fff' },
+                  ]}
+                >
+                  {getStatusLabel(f === 'all' ? 'الكل' : f)}
+                </Text>
+                {count > 0 && (
+                  <View style={[styles.chipCount, { backgroundColor: activeFilter === f ? 'rgba(255,255,255,0.2)' : colors.border }]}>
+                    <Text style={[styles.chipCountText, { color: activeFilter === f ? '#fff' : colors.textMuted }]}>{count}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          }}
         />
       </View>
 
-      {/* Orders count */}
-      <View style={styles.countRow}>
-        <Text style={[styles.countText, { color: colors.textMuted }]}>
-          {orders.length} {orders.length === 1 ? 'طلب' : 'طلبات'}
-        </Text>
-      </View>
-
+      {/* Orders list */}
       <FlatList
-        data={orders}
+        data={filteredOrders}
         keyExtractor={(o) => String(o.id)}
         contentContainerStyle={{ paddingTop: 4, paddingBottom: 20 }}
         refreshControl={
@@ -171,10 +221,14 @@ export function OrdersScreen({ navigation, route }: any) {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <View style={[styles.emptyIconWrap, { backgroundColor: colors.primaryLight }]}>
-              <Ionicons name="receipt-outline" size={32} color={colors.primary} />
+              <Ionicons name={search ? 'search-outline' : 'receipt-outline'} size={28} color={colors.primary} />
             </View>
-            <Text style={[styles.emptyText, { color: colors.text }]}>لا توجد طلبات</Text>
-            <Text style={[styles.emptyHint, { color: colors.textMuted }]}>اسحب لأسفل للتحديث</Text>
+            <Text style={[styles.emptyText, { color: colors.text }]}>
+              {search ? 'لا توجد نتائج بحث' : 'لا توجد طلبات'}
+            </Text>
+            <Text style={[styles.emptyHint, { color: colors.textMuted }]}>
+              {search ? 'جرّب كلمة بحث مختلفة' : 'اسحب لأسفل للتحديث'}
+            </Text>
           </View>
         }
       />
@@ -185,18 +239,32 @@ export function OrdersScreen({ navigation, route }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  filters: { paddingTop: 8 },
+  inlineHeader: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4,
+  },
+  inlineTitle: { fontSize: FONT.lg, fontWeight: '800' },
+  searchWrap: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    marginHorizontal: 16, marginTop: 8, marginBottom: 4,
+    paddingHorizontal: 12, height: 40, borderRadius: RADIUS.md, borderWidth: 1,
+  },
+  searchInput: { flex: 1, paddingVertical: 0, fontSize: FONT.sm },
+  filters: { paddingTop: 6 },
   filterList: { paddingHorizontal: 16, gap: 6 },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 14, paddingVertical: 7,
+    paddingHorizontal: 10, paddingVertical: 6,
     borderRadius: RADIUS.full, borderWidth: 1,
   },
-  chipText: { fontSize: FONT.xs, fontWeight: '600' },
-  countRow: { paddingHorizontal: 16, paddingVertical: 6 },
-  countText: { fontSize: FONT.xs, fontWeight: '500' },
+  chipText: { fontSize: 10, fontWeight: '600' },
+  chipCount: { minWidth: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+  chipCountText: { fontSize: 8, fontWeight: '700' },
   emptyState: { alignItems: 'center', paddingVertical: 60 },
-  emptyIconWrap: { width: 56, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  emptyText: { fontSize: FONT.lg, fontWeight: '700' },
-  emptyHint: { fontSize: FONT.sm, marginTop: 4 },
+  emptyIconWrap: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
+  emptyText: { fontSize: FONT.md, fontWeight: '700' },
+  emptyHint: { fontSize: FONT.sm, marginTop: 2 },
+  skeleton: { marginHorizontal: 16, marginBottom: 8, borderRadius: RADIUS.lg, padding: 14 },
+  skelAvatar: { width: 36, height: 36, borderRadius: 8 },
+  skelLine: { height: 12, borderRadius: 4 },
 });

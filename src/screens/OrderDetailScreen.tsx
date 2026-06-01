@@ -6,7 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors } from '../contexts/ThemeContext';
-import { RADIUS, FONT, SHADOW } from '../constants/theme';
+import { RADIUS, FONT } from '../constants/theme';
 import { formatCurrency, formatDate, getStatusLabel } from '../utils/format';
 import { API_BASE_URL } from '../constants/api';
 import type { OrderDetail } from '../types';
@@ -106,25 +106,30 @@ export function OrderDetailScreen({ route }: any) {
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
       {/* Status Banner */}
-      <View style={[styles.statusBanner, { backgroundColor: statusColor + '12' }]}>
-        <Ionicons name={statusColor === colors.success ? 'checkmark-circle' : statusColor === colors.danger ? 'close-circle' : 'time'} size={18} color={statusColor} />
-        <Text style={[styles.statusText, { color: statusColor }]}>{getStatusLabel(order.status)}</Text>
+      <View style={[styles.statusBanner, { backgroundColor: statusColor }]}>
+        <Ionicons
+          name={order.status === 'delivered' ? 'checkmark-circle' : order.status === 'cancelled' ? 'close-circle' : 'time'}
+          size={18} color="#fff"
+        />
+        <Text style={styles.statusText}>{getStatusLabel(order.status)}</Text>
       </View>
 
       {/* Customer Card */}
       <View style={[styles.card, { backgroundColor: colors.card }]}>
         <View style={styles.cardHeader}>
-          <Ionicons name="person-outline" size={16} color={colors.textMuted} />
+          <Ionicons name="person-outline" size={14} color={colors.textMuted} />
           <Text style={[styles.cardTitle, { color: colors.textMuted }]}>العميل</Text>
         </View>
         <Text style={[styles.customerName, { color: colors.text }]}>{order.customer_name}</Text>
         <TouchableOpacity style={styles.phoneRow} onPress={callCustomer}>
-          <Ionicons name="call-outline" size={16} color={colors.primary} />
+          <View style={[styles.iconSm, { backgroundColor: colors.primaryLight }]}>
+            <Ionicons name="call-outline" size={13} color={colors.primary} />
+          </View>
           <Text style={[styles.phone, { color: colors.primary }]}>{order.customer_phone}</Text>
         </TouchableOpacity>
         {order.address && (
           <View style={styles.addressRow}>
-            <Ionicons name="location-outline" size={16} color={colors.textSecondary} />
+            <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
             <Text style={[styles.address, { color: colors.textSecondary }]}>{order.address}</Text>
           </View>
         )}
@@ -133,13 +138,13 @@ export function OrderDetailScreen({ route }: any) {
       {/* Product Card */}
       <View style={[styles.card, { backgroundColor: colors.card }]}>
         <View style={styles.cardHeader}>
-          <Ionicons name="bag-outline" size={16} color={colors.textMuted} />
+          <Ionicons name="bag-outline" size={14} color={colors.textMuted} />
           <Text style={[styles.cardTitle, { color: colors.textMuted }]}>المنتج</Text>
         </View>
         <Text style={[styles.productName, { color: colors.text }]}>{order.product_title}</Text>
         {order.variant_name && (
           <View style={styles.addressRow}>
-            <Ionicons name="pricetag-outline" size={14} color={colors.textSecondary} />
+            <Ionicons name="pricetag-outline" size={13} color={colors.textSecondary} />
             <Text style={[styles.variant, { color: colors.textSecondary }]}>{order.variant_name}</Text>
           </View>
         )}
@@ -153,36 +158,43 @@ export function OrderDetailScreen({ route }: any) {
       {/* Source Card */}
       <View style={[styles.card, { backgroundColor: colors.card }]}>
         <View style={styles.cardHeader}>
-          <Ionicons name="information-circle-outline" size={16} color={colors.textMuted} />
+          <Ionicons name="information-circle-outline" size={14} color={colors.textMuted} />
           <Text style={[styles.cardTitle, { color: colors.textMuted }]}>مصدر الطلب</Text>
         </View>
-        <View style={styles.infoItem}>
-          <Ionicons
-            name={order.order_source === 'ai_customer' ? 'hardware-chip-outline' : 'create-outline'}
-            size={16}
-            color={colors.text}
-          />
-          <Text style={[styles.infoText, { color: colors.text }]}>{order.order_source_label || order.order_source}</Text>
-        </View>
+        {order.order_source_label && (
+          <View style={styles.infoItem}>
+            <View style={[styles.iconSm, { backgroundColor: colors.primaryLight }]}>
+              <Ionicons name={order.order_source === 'ai_customer' ? 'hardware-chip-outline' : 'create-outline'} size={13} color={colors.primary} />
+            </View>
+            <Text style={[styles.infoText, { color: colors.text }]}>{order.order_source_label}</Text>
+          </View>
+        )}
         {order.source_platform_label && (
           <View style={styles.infoItem}>
-            <Ionicons
-              name={order.source_platform === 'telegram' ? 'paper-plane-outline' : order.source_platform === 'messenger' ? 'chatbubble-outline' : 'globe-outline'}
-              size={16}
-              color={colors.text}
-            />
+            <View style={[styles.iconSm, { backgroundColor: colors.infoLight }]}>
+              <Ionicons
+                name={order.source_platform === 'telegram' ? 'paper-plane-outline' : order.source_platform === 'messenger' ? 'chatbubble-outline' : 'globe-outline'}
+                size={13} color={colors.info}
+              />
+            </View>
             <Text style={[styles.infoText, { color: colors.text }]}>{order.source_platform_label}</Text>
           </View>
         )}
         {order.delivery_type && (
           <View style={styles.infoItem}>
-            <Ionicons name={order.delivery_type === 'desk' ? 'business-outline' : 'home-outline'} size={16} color={colors.text} />
-            <Text style={[styles.infoText, { color: colors.text }]}>{order.delivery_type === 'desk' ? 'توصيل إلى المكتب' : 'توصيل إلى المنزل'}</Text>
+            <View style={[styles.iconSm, { backgroundColor: colors.warningLight }]}>
+              <Ionicons name={order.delivery_type === 'desk' ? 'business-outline' : 'home-outline'} size={13} color={colors.warning} />
+            </View>
+            <Text style={[styles.infoText, { color: colors.text }]}>
+              {order.delivery_type === 'desk' ? 'توصيل إلى المكتب' : 'توصيل إلى المنزل'}
+            </Text>
           </View>
         )}
         {order.tracking_number && (
           <View style={styles.infoItem}>
-            <Ionicons name="cube-outline" size={16} color={colors.text} />
+            <View style={[styles.iconSm, { backgroundColor: colors.successLight }]}>
+              <Ionicons name="cube-outline" size={13} color={colors.success} />
+            </View>
             <Text style={[styles.infoText, { color: colors.text }]}>رقم التتبع: {order.tracking_number}</Text>
           </View>
         )}
@@ -192,7 +204,7 @@ export function OrderDetailScreen({ route }: any) {
       {order.timeline && order.timeline.length > 0 && (
         <View style={[styles.card, { backgroundColor: colors.card }]}>
           <View style={styles.cardHeader}>
-            <Ionicons name="time-outline" size={16} color={colors.textMuted} />
+            <Ionicons name="time-outline" size={14} color={colors.textMuted} />
             <Text style={[styles.cardTitle, { color: colors.textMuted }]}>آخر التحديثات</Text>
           </View>
           {order.timeline.map((t: any, i: number) => (
@@ -226,7 +238,7 @@ export function OrderDetailScreen({ route }: any) {
                 <ActivityIndicator color="#fff" size="small" />
               ) : (
                 <>
-                  <Ionicons name={a.icon} size={18} color="#fff" />
+                  <Ionicons name={a.icon} size={16} color="#fff" />
                   <Text style={styles.actionBtnText}>{a.label}</Text>
                 </>
               )}
@@ -238,11 +250,11 @@ export function OrderDetailScreen({ route }: any) {
       {/* Customer Contact */}
       <View style={styles.contactRow}>
         <TouchableOpacity style={[styles.contactBtn, { backgroundColor: colors.success }]} onPress={whatsappCustomer}>
-          <Ionicons name="logo-whatsapp" size={18} color="#fff" />
+          <Ionicons name="logo-whatsapp" size={16} color="#fff" />
           <Text style={styles.contactLabel}>واتساب</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.contactBtn, { backgroundColor: colors.primary }]} onPress={callCustomer}>
-          <Ionicons name="call" size={18} color="#fff" />
+          <Ionicons name="call" size={16} color="#fff" />
           <Text style={styles.contactLabel}>اتصال</Text>
         </TouchableOpacity>
       </View>
@@ -258,21 +270,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     padding: 12, borderRadius: RADIUS.lg, marginBottom: 12, gap: 8,
   },
-  statusText: { fontSize: FONT.md, fontWeight: '700' },
+  statusText: { fontSize: FONT.md, fontWeight: '700', color: '#fff' },
   card: {
-    borderRadius: RADIUS.lg, padding: 16, marginBottom: 10, ...SHADOW.card,
+    borderRadius: RADIUS.lg, padding: 16, marginBottom: 10,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
   cardTitle: { fontSize: FONT.xs, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.3 },
   customerName: { fontSize: FONT.lg, fontWeight: '700', marginBottom: 8 },
-  phoneRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
+  phoneRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
   phone: { fontSize: FONT.md, fontWeight: '600' },
   addressRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
   address: { fontSize: FONT.sm },
+  iconSm: { width: 26, height: 26, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
   productName: { fontSize: FONT.lg, fontWeight: '700', marginBottom: 4 },
   variant: { fontSize: FONT.sm },
   quantity: { fontSize: FONT.sm, marginTop: 4, marginBottom: 8 },
-  infoItem: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
+  infoItem: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   infoText: { fontSize: FONT.sm, flex: 1 },
   priceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth },
   priceLabel: { fontSize: FONT.sm, fontWeight: '600' },
@@ -286,14 +299,14 @@ const styles = StyleSheet.create({
   timelineTime: { fontSize: FONT.xs, marginTop: 2 },
   actions: { flexDirection: 'row', gap: 8, marginTop: 4, marginBottom: 10 },
   actionBtn: {
-    flex: 1, padding: 14, borderRadius: RADIUS.lg, alignItems: 'center',
+    flex: 1, padding: 12, borderRadius: RADIUS.lg, alignItems: 'center',
     flexDirection: 'row', justifyContent: 'center', gap: 6,
   },
   actionBtnText: { color: '#fff', fontSize: FONT.md, fontWeight: '700' },
   contactRow: { flexDirection: 'row', gap: 8 },
   contactBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 6, padding: 14, borderRadius: RADIUS.lg,
+    gap: 6, padding: 12, borderRadius: RADIUS.lg,
   },
   contactLabel: { color: '#fff', fontSize: FONT.md, fontWeight: '700' },
 });
