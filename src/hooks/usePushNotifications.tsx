@@ -84,11 +84,14 @@ export function NotifProvider({ children }: { children: React.ReactNode }) {
       for (const n of data) {
         if (n.id && !seenNotifIds.current.has(n.id)) {
           seenNotifIds.current.add(n.id);
-          Notifications.presentNotificationAsync({
-            title: n.title,
-            body: n.body,
-            data: { type: n.type, order_id: n.order_id },
-            sound: true,
+          Notifications.scheduleNotificationAsync({
+            content: {
+              title: n.title,
+              body: n.body,
+              data: { type: n.type, order_id: n.order_id },
+              sound: true,
+            },
+            trigger: { type: 'timeInterval', seconds: 1 },
           }).catch(() => {});
         }
       }
