@@ -82,6 +82,7 @@ export function NotifProvider({ children }: { children: React.ReactNode }) {
       const data = await fetchNotifications(jwt);
       // Show local notification for any unseen items
       for (const n of data) {
+        if (n.read) continue;
         if (n.id && !seenNotifIds.current.has(n.id)) {
           seenNotifIds.current.add(n.id);
           Notifications.scheduleNotificationAsync({
@@ -90,6 +91,7 @@ export function NotifProvider({ children }: { children: React.ReactNode }) {
               body: n.body,
               data: { type: n.type, order_id: n.order_id },
               sound: true,
+              channelId: 'default',
             },
             trigger: { type: 'timeInterval', seconds: 1 },
           }).catch(() => {});
