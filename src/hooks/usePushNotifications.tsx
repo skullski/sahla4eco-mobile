@@ -32,6 +32,7 @@ export function NotifProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
+  const seenNotifIds = useRef(new Set<number>());
 
   const register = useCallback(async () => {
     console.log('[push] register() called, isDevice:', Device.isDevice);
@@ -79,6 +80,18 @@ export function NotifProvider({ children }: { children: React.ReactNode }) {
       const jwt = await getJwt();
       if (!jwt) return;
       const data = await fetchNotifications(jwt);
+      // Show local notification for any unseen items
+      for (const n of data) {
+        if (n.id && !seenNotifIds.current.has(n.id)) {
+          seenNotifIds.current.add(n.id);
+          Notifications.presentNotificationAsync({
+            title: n.title,
+            body: n.body,
+            data: { type: n.type, order_id: n.order_id },
+            sound: true,
+          }).catch(() => {});
+        }
+      }
       setNotifications(data);
     } catch {}
   }, [user]);
@@ -157,7 +170,7 @@ export function NotifProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!user) return;
     refresh();
-    const interval = setInterval(refresh, 30000);
+    const interval = setInterval(refresh, 8000);
     return () => clearInterval(interval);
   }, [user, refresh]);
 
