@@ -2,11 +2,14 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { AppState, Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import * as SecureStore from 'expo-secure-store';
 import { useAuth } from '../contexts/AuthContext';
 import { registerPushToken, unregisterPushToken, fetchNotifications, markNotificationsRead } from '../api/auth';
 import { getJwt } from '../api/client';
 import type { EventSubscription } from 'expo-modules-core';
 import type { AppNotification } from '../types';
+
+const NOTIFIED_IDS_KEY = 'notified_notification_ids';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -32,7 +35,25 @@ export function NotifProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
-  const seenNotifIds = useRef(new Set<number>());
+  const seenNotifIds = useRef<Set<number>>(new Set());
+  const loadedRef = useRef(false);
+
+  const persistSeenIds = useCallback(async (ids: Set<number>) => {
+    try {
+      await SecureStore.setItemAsync(NOTIFIED_IDS_KEY, JSON.stringify([...ids]));
+    } catch {}
+  }, []);
+
+  const loadSeenIds = useCallback(async () => {
+    try {
+      const raw = await SecureStore.getItemAsync(NOTIFIED_IDS_KEY);
+      if (raw) {
+        const arr: number[] = JSON.parse(raw);
+        seenNotifIds.current = new Set(arr);
+      }
+    } catch {}
+    loadedRef.current = true;
+  }, []);
 
   const register = useCallback(async () => {
     console.log('[push] register() called, isDevice:', Device.isDevice);
@@ -80,11 +101,12 @@ export function NotifProvider({ children }: { children: React.ReactNode }) {
       const jwt = await getJwt();
       if (!jwt) return;
       const data = await fetchNotifications(jwt);
-      // Show local notification for any unseen items
+      let changed = false;
       for (const n of data) {
         if (n.read) continue;
         if (n.id && !seenNotifIds.current.has(n.id)) {
           seenNotifIds.current.add(n.id);
+          changed = true;
           Notifications.scheduleNotificationAsync({
             content: {
               title: n.title,
@@ -97,6 +119,7 @@ export function NotifProvider({ children }: { children: React.ReactNode }) {
           }).catch(() => {});
         }
       }
+      if (changed) persistSeenIds(seenNotifIds.current);
       setNotifications(data);
     } catch {}
   }, [user]);
@@ -174,10 +197,15 @@ export function NotifProvider({ children }: { children: React.ReactNode }) {
   // Refresh notifications periodically
   useEffect(() => {
     if (!user) return;
-    refresh();
+    let cancelled = false;
+    (async () => {
+      await loadSeenIds();
+      if (cancelled) return;
+      refresh();
+    })();
     const interval = setInterval(refresh, 8000);
-    return () => clearInterval(interval);
-  }, [user, refresh]);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [user, refresh, loadSeenIds]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
