@@ -1,7 +1,25 @@
+/**
+ * AGENT INSTRUCTIONS — MOBILE APP NAVIGATOR
+ * ----------------------------------------------------------------------------
+ * THE MOBILE APP IS BASIC BY DESIGN. Do not turn it into a mini-platform.
+ *
+ * Store owners open this app to do ONLY TWO things:
+ *   1. See and confirm orders quickly (so they don't have to open the platform).
+ *   2. Receive notifications about new orders / status changes.
+ *
+ * NOTIFICATIONS is the hero feature — the whole app was built around it.
+ * If you add screens, prefer SHELL features (e.g. settings, profile) over
+ * duplicating platform functionality (analytics, marketing, billing).
+ *
+ * Headers MUST use primary color background with white text/icons to extend
+ * into the status bar area. The Orders stack's OrderDetail MUST show a back
+ * arrow even when it is the first screen in the stack (navigates to Orders).
+ * ----------------------------------------------------------------------------
+ */
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { DashboardScreen } from '../screens/DashboardScreen';
@@ -24,15 +42,23 @@ function OrdersStackScreen() {
       <OrdersStack.Screen
         name="OrderDetail"
         component={OrderDetailScreen}
-        options={{
+        options={({ navigation: nav }) => ({
           title: 'تفاصيل الطلب',
           headerShown: true,
           headerBackTitle: 'رجوع',
-          headerStyle: { backgroundColor: colors.card },
-          headerTintColor: colors.text,
-          headerTitleStyle: { color: colors.text, fontWeight: '700' },
+          headerStyle: { backgroundColor: colors.primary },
+          headerTintColor: '#fff',
+          headerTitleStyle: { color: '#fff', fontWeight: '700' },
           headerShadowVisible: false,
-        }}
+          headerLeft: () => (
+            <TouchableOpacity
+              onPress={() => { if (nav.canGoBack()) nav.goBack(); else nav.navigate('Orders'); }}
+              style={{ paddingLeft: 4, paddingRight: 12 }}
+            >
+              <Ionicons name="arrow-forward" size={22} color="#fff" />
+            </TouchableOpacity>
+          ),
+        })}
       />
       <OrdersStack.Screen name="Tracking" component={TrackingScreen} />
     </OrdersStack.Navigator>

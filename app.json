@@ -4,6 +4,7 @@
     "slug": "ssahla4eco",
     "version": "1.0.0",
     "orientation": "portrait",
+    "scheme": "sahla4eco",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
@@ -44,7 +45,9 @@
       "expo-notifications",
       "expo-asset",
       "expo-updates",
-      "expo-font"
+      "expo-font",
+      "expo-web-browser",
+      "expo-crypto"
     ],
     "extra": {
       "eas": {

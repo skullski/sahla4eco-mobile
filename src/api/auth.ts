@@ -93,3 +93,13 @@ export async function markNotificationsRead(jwt: string): Promise<void> {
 export async function logout(): Promise<void> {
   await clearTokens();
 }
+
+export async function loginWithGoogle(idToken: string): Promise<{ user: User; tokens: AuthTokens }> {
+  const data = await apiPost<{ token: string; refresh_token?: string; user: User }>('/api/auth/google', {
+    id_token: idToken,
+  });
+  const tokens: AuthTokens = { jwt: data.token, refresh_token: data.refresh_token };
+  await setTokens(tokens);
+  await saveUser(data.user);
+  return { user: data.user, tokens };
+}

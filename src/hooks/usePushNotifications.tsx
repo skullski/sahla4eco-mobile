@@ -1,3 +1,28 @@
+/**
+ * AGENT INSTRUCTIONS — PUSH NOTIFICATIONS
+ * ----------------------------------------------------------------------------
+ * NOTIFICATIONS IS THE HERO FEATURE of this app. The whole app was built
+ * around it. Do not remove or simplify this without strong reason.
+ *
+ * This hook must work on ALL Android systems, not just Google Play Services
+ * devices. The strategy is layered:
+ *   1. Try to obtain an FCM/Expo push token (works on Google Play + iOS).
+ *      On success, register it with the server so the platform can also
+ *      send native push when the app is killed.
+ *   2. ALWAYS poll the in-app notifications API every 4s while the user is
+ *      signed in — this covers microG, /e/OS, LineageOS, and any device
+ *      where FCM does not register. For any unseen unread item, fire a
+ *      local system notification via `scheduleNotificationAsync`. Also
+ *      refresh immediately when the app comes to the foreground so the
+ *      user does not wait for the next poll.
+ *
+ * Local notifications MUST:
+ *   - Use channelId: 'default' (channel name: "الإشعارات", HIGH importance)
+ *   - Persist seen IDs in SecureStore under NOTIFIED_IDS_KEY so app
+ *     restarts do not re-notify already-seen items.
+ *   - Skip items where `read === true` (already marked read on server).
+ * ----------------------------------------------------------------------------
+ */
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { AppState, Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
@@ -113,9 +138,8 @@ export function NotifProvider({ children }: { children: React.ReactNode }) {
               body: n.body,
               data: { type: n.type, order_id: n.order_id },
               sound: true,
-              channelId: 'default',
             },
-            trigger: { type: 'timeInterval', seconds: 1 },
+            trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, channelId: 'default', seconds: 1 },
           }).catch(() => {});
         }
       }
@@ -194,7 +218,7 @@ export function NotifProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Refresh notifications periodically
+  // Refresh notifications periodically + immediately on app foreground
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
@@ -203,8 +227,17 @@ export function NotifProvider({ children }: { children: React.ReactNode }) {
       if (cancelled) return;
       refresh();
     })();
-    const interval = setInterval(refresh, 8000);
-    return () => { cancelled = true; clearInterval(interval); };
+    const interval = setInterval(refresh, 4000);
+    // Refresh immediately when the app comes to the foreground so the user
+    // does not have to wait up to the poll interval to see new activity.
+    const appStateSub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') refresh();
+    });
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      appStateSub.remove();
+    };
   }, [user, refresh, loadSeenIds]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;

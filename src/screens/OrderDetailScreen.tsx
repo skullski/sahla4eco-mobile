@@ -1,3 +1,16 @@
+/**
+ * AGENT INSTRUCTIONS — ORDER DETAIL SCREEN
+ * ----------------------------------------------------------------------------
+ * Single purpose: let the store owner CONFIRM / CANCEL / CALL the customer
+ * for one specific order. Do not add cross-sell, upsell, marketing prompts,
+ * or product editing — that belongs to the platform.
+ *
+ * The native stack header MUST use primary color background with white
+ * text/icons so it extends into the status bar. A back arrow is REQUIRED
+ * even when this is the first screen in the stack — it is configured in
+ * AppNavigator.tsx with a custom headerLeft.
+ * ----------------------------------------------------------------------------
+ */
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator,
@@ -11,7 +24,7 @@ import { formatCurrency, formatDate, getStatusLabel } from '../utils/format';
 import { API_BASE_URL } from '../constants/api';
 import type { OrderDetail } from '../types';
 
-export function OrderDetailScreen({ route }: any) {
+export function OrderDetailScreen({ navigation, route }: any) {
   const { id } = route.params;
   const { getAccessToken } = useAuth();
   const colors = useColors();

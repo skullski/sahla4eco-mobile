@@ -1,8 +1,17 @@
+/**
+ * AGENT INSTRUCTIONS — TRACKING SCREEN
+ * ----------------------------------------------------------------------------
+ * Valid basic feature — lets the store owner search tracking numbers and
+ * copy them for courier hand-off. Keep it simple, do not turn it into an
+ * analytics page or add map widgets.
+ * ----------------------------------------------------------------------------
+ */
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity,
   ActivityIndicator, TextInput, Clipboard, Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
@@ -98,6 +107,7 @@ function TrackingProgress({ status, colors }: { status: string; colors: Record<s
 export function TrackingScreen({ navigation }: any) {
   const { getAccessToken } = useAuth();
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const [orders, setOrders] = useState<MobileOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -168,11 +178,11 @@ export function TrackingScreen({ navigation }: any) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Inline header */}
-      <View style={[styles.inlineHeader, { backgroundColor: colors.background }]}>
+      <View style={[styles.inlineHeader, { backgroundColor: colors.primary, paddingTop: insets.top + 8 }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-forward" size={20} color={colors.primary} />
+          <Ionicons name="arrow-forward" size={20} color="#fff" />
         </TouchableOpacity>
-        <Text style={[styles.inlineTitle, { color: colors.text }]}>تتبع الشحنات</Text>
+        <Text style={[styles.inlineTitle, { color: '#fff' }]}>تتبع الشحنات</Text>
         <View style={{ width: 28 }} />
       </View>
       {/* Stats Summary */}

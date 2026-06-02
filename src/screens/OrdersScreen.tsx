@@ -1,8 +1,24 @@
+/**
+ * AGENT INSTRUCTIONS — ORDERS SCREEN
+ * ----------------------------------------------------------------------------
+ * This is the store owner's primary work surface. Keep it BASIC:
+ *   - See incoming orders fast
+ *   - Filter by status (the only filters you need)
+ *   - Tap an order to confirm/cancel/call the customer
+ *
+ * Do NOT add analytics charts, marketing widgets, or product management —
+ * those belong in the platform, not the mobile app.
+ *
+ * Header must use primary color extending into the status bar
+ * (paddingTop = insets.top + 12). White text and icons.
+ * ----------------------------------------------------------------------------
+ */
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity,
   ActivityIndicator, Alert, TextInput,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
@@ -27,6 +43,7 @@ const FILTER_ICONS: Record<string, React.ComponentProps<typeof Ionicons>['name']
 export function OrdersScreen({ navigation, route }: any) {
   const { getAccessToken } = useAuth();
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const [orders, setOrders] = useState<MobileOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -134,10 +151,10 @@ export function OrdersScreen({ navigation, route }: any) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Inline header */}
-      <View style={[styles.inlineHeader, { backgroundColor: colors.background }]}>
-        <Text style={[styles.inlineTitle, { color: colors.text }]}>الطلبات</Text>
+      <View style={[styles.inlineHeader, { backgroundColor: colors.primary, paddingTop: insets.top + 12 }]}>
+        <Text style={[styles.inlineTitle, { color: '#fff' }]}>الطلبات</Text>
         <TouchableOpacity onPress={() => navigation.navigate('Tracking')}>
-          <Ionicons name="car-outline" size={20} color={colors.primary} />
+          <Ionicons name="car-outline" size={22} color="#fff" />
         </TouchableOpacity>
       </View>
       {/* Search Bar */}

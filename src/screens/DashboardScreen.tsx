@@ -1,8 +1,19 @@
+/**
+ * AGENT INSTRUCTIONS — DASHBOARD SCREEN
+ * ----------------------------------------------------------------------------
+ * Keep this BASIC. Show the store owner today's numbers at a glance —
+ * today's revenue, today's orders, pending count, low stock. No charts,
+ * no trends, no analytics drilldown (those belong in the platform).
+ * Notifications is the hero feature; this screen is just a launchpad
+ * to Orders, Tracking, Notifications.
+ * ----------------------------------------------------------------------------
+ */
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator,
   TouchableOpacity, Animated,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
@@ -16,6 +27,7 @@ import { API_BASE_URL } from '../constants/api';
 export function DashboardScreen({ navigation }: any) {
   const { user, getAccessToken } = useAuth();
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const { unreadCount } = useNotif();
   const [stats, setStats] = useState<any>(null);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
@@ -67,7 +79,7 @@ export function DashboardScreen({ navigation }: any) {
       }
     >
       {/* Header with gradient */}
-      <View style={[styles.header, { backgroundColor: colors.primary }]}>
+      <View style={[styles.header, { backgroundColor: colors.primary, paddingTop: insets.top + 16 }]}>
         <View style={styles.headerContent}>
           <View style={styles.headerLeft}>
             <Text style={styles.greeting}>مرحباً، {user?.name || 'المالك'}</Text>

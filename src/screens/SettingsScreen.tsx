@@ -1,7 +1,17 @@
+/**
+ * AGENT INSTRUCTIONS — SETTINGS SCREEN
+ * ----------------------------------------------------------------------------
+ * Keep settings MINIMAL. Only essential toggles: notifications, theme,
+ * check for update, version, logout, and (future) Gmail login. Do not
+ * add subscription management, team management, API keys — that belongs
+ * in the platform.
+ * ----------------------------------------------------------------------------
+ */
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Switch, ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Updates from 'expo-updates';
 import Constants from 'expo-constants';
@@ -13,6 +23,7 @@ import { RADIUS, FONT } from '../constants/theme';
 export function SettingsScreen({ navigation }: any) {
   const { user, logout } = useAuth();
   const { colors, isDark, preference, setPreference } = useTheme();
+  const insets = useSafeAreaInsets();
   const { unreadCount, markAllRead } = useNotif();
   const [checkingUpdate, setCheckingUpdate] = useState(false);
 
@@ -57,7 +68,7 @@ export function SettingsScreen({ navigation }: any) {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.primary }]}>
+      <View style={[styles.header, { backgroundColor: colors.primary, paddingTop: insets.top + 14 }]}>
         <Text style={styles.headerTitle}>الإعدادات</Text>
       </View>
 
