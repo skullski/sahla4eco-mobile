@@ -112,11 +112,22 @@ export function NotifProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const tokenData = await Notifications.getExpoPushTokenAsync();
-      console.log('[push] got token:', tokenData.data);
+      const tokenData = await Notifications.getDevicePushTokenAsync();
+      console.log('[push] got FCM token:', tokenData.data);
       setExpoPushToken(tokenData.data);
+      if (tokenData.data) {
+        try {
+          const jwt = await getJwt();
+          if (jwt) {
+            await registerPushToken(jwt, tokenData.data, 'android');
+            console.log('[push] FCM token registered with server');
+          }
+        } catch (e: any) {
+          console.error('[push] registerPushToken FAILED:', e.message);
+        }
+      }
     } catch (e: any) {
-      console.error('[push] getExpoPushTokenAsync FAILED:', e.message);
+      console.error('[push] getDevicePushTokenAsync FAILED:', e.message);
     }
   }, []);
 
