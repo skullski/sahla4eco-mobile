@@ -79,7 +79,7 @@ export function DashboardScreen({ navigation }: any) {
       }
     >
       {/* Header with gradient */}
-      <View style={[styles.header, { backgroundColor: colors.primary, paddingTop: insets.top + 16 }]}>
+      <View style={[styles.header, { backgroundColor: colors.primary, paddingTop: insets.top + 4 }]}>
         <View style={styles.headerContent}>
           <View style={styles.headerLeft}>
             <Text style={styles.greeting}>مرحباً، {user?.name || 'المالك'}</Text>
@@ -254,11 +254,11 @@ const styles = StyleSheet.create({
   content: { paddingBottom: 32 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
-    paddingTop: 16,
+    paddingTop: 4,
     paddingHorizontal: 16,
-    paddingBottom: 28,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    paddingBottom: 12,
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
     overflow: 'hidden',
   },
   headerOverlay: {

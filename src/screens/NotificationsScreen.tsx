@@ -52,7 +52,7 @@ export function NotificationsScreen({ navigation }: any) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.primary, paddingTop: insets.top + 14 }]}>
+      <View style={[styles.header, { backgroundColor: colors.primary, paddingTop: insets.top + 4 }]}>
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>الإشعارات</Text>
           {unreadCount > 0 && (
@@ -119,7 +119,7 @@ export function NotificationsScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingHorizontal: 16, paddingVertical: 14, borderBottomLeftRadius: 20, borderBottomRightRadius: 20 },
+  header: { paddingHorizontal: 16, paddingVertical: 10, borderBottomLeftRadius: 16, borderBottomRightRadius: 16 },
   headerContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   headerTitle: { fontSize: FONT.xl, fontWeight: '800', color: '#fff' },
   markAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: RADIUS.sm },
