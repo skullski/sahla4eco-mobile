@@ -46,8 +46,7 @@
       "expo-asset",
       "expo-updates",
       "expo-font",
-      "expo-web-browser",
-      "expo-crypto"
+      "expo-web-browser"
     ],
     "extra": {
       "eas": {
