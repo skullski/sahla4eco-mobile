@@ -10,7 +10,7 @@ interface AuthContextType {
   getAccessToken: () => Promise<string | null>;
   login: (email: string, password: string) => Promise<void>;
   loginQR: (token: string) => Promise<void>;
-  loginGoogle: (idToken: string) => Promise<void>;
+  loginGoogle: (code: string) => Promise<void>;
   logout: () => Promise<void>;
   savedAccounts: SavedAccount[];
   refreshSavedAccounts: () => Promise<void>;
