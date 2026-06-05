@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getSavedUser, getJwt, clearTokens } from '../api/client';
+import { getSavedUser, getJwt, clearTokens, getSavedAccounts, addSavedAccount, removeSavedAccount, trySilentLogin, SavedAccount } from '../api/client';
 import { loginWithEmail, loginWithQR, loginWithGoogle, logout as apiLogout } from '../api/auth';
 import type { User } from '../types';
 
@@ -12,6 +12,10 @@ interface AuthContextType {
   loginQR: (token: string) => Promise<void>;
   loginGoogle: (idToken: string) => Promise<void>;
   logout: () => Promise<void>;
+  savedAccounts: SavedAccount[];
+  refreshSavedAccounts: () => Promise<void>;
+  removeAccount: (email: string) => Promise<void>;
+  silentLogin: (email: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -19,12 +23,19 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [savedAccounts, setSavedAccounts] = useState<SavedAccount[]>([]);
+
+  const refreshSavedAccounts = useCallback(async () => {
+    const accounts = await getSavedAccounts();
+    setSavedAccounts(accounts);
+  }, []);
 
   useEffect(() => {
     getSavedUser().then((u) => {
       if (u) setUser(u);
       setIsLoading(false);
     });
+    refreshSavedAccounts();
   }, []);
 
   const getAccessToken = useCallback(async () => {
@@ -34,26 +45,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     const result = await loginWithEmail(email, password);
     setUser(result.user);
-  }, []);
+    if (result.tokens.refresh_token) {
+      await addSavedAccount(result.user, result.tokens.refresh_token);
+      await refreshSavedAccounts();
+    }
+  }, [refreshSavedAccounts]);
 
   const loginQR = useCallback(async (token: string) => {
     const result = await loginWithQR(token);
     setUser(result.user);
-  }, []);
+    if (result.tokens.refresh_token) {
+      await addSavedAccount(result.user, result.tokens.refresh_token);
+      await refreshSavedAccounts();
+    }
+  }, [refreshSavedAccounts]);
 
   const loginGoogle = useCallback(async (idToken: string) => {
     const result = await loginWithGoogle(idToken);
     setUser(result.user);
-  }, []);
+    if (result.tokens.refresh_token) {
+      await addSavedAccount(result.user, result.tokens.refresh_token);
+      await refreshSavedAccounts();
+    }
+  }, [refreshSavedAccounts]);
 
   const logout = useCallback(async () => {
     await apiLogout();
     setUser(null);
+    await refreshSavedAccounts();
+  }, [refreshSavedAccounts]);
+
+  const removeAccount = useCallback(async (email: string) => {
+    await removeSavedAccount(email);
+    await refreshSavedAccounts();
+  }, [refreshSavedAccounts]);
+
+  const silentLogin = useCallback(async (email: string): Promise<boolean> => {
+    const result = await trySilentLogin(email);
+    if (result) {
+      setUser(result.user);
+      return true;
+    }
+    return false;
   }, []);
 
   return (
     <AuthContext.Provider
-      value={{ user, isLoading, isAuthenticated: !!user, getAccessToken, login, loginQR, loginGoogle, logout }}
+      value={{ user, isLoading, isAuthenticated: !!user, getAccessToken, login, loginQR, loginGoogle, logout, savedAccounts, refreshSavedAccounts, removeAccount, silentLogin }}
     >
       {children}
     </AuthContext.Provider>
@@ -62,6 +100,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be inside AuthProvider');
+  if (!ctx) throw new Error('useAuth must be inside AuthContext');
   return ctx;
 }

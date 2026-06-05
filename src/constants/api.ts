@@ -13,4 +13,5 @@ export const STORAGE_KEYS = {
   PUSH_TOKEN: 'sahla4eco_push_token',
   BIOMETRIC_ENABLED: 'sahla4eco_biometric',
   NOTIF_PREFERENCES: 'sahla4eco_notif_prefs',
+  SAVED_ACCOUNTS: 'sahla4eco_saved_accounts',
 };

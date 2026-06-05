@@ -2,6 +2,12 @@ import * as SecureStore from 'expo-secure-store';
 import { API_BASE_URL, STORAGE_KEYS } from '../constants/api';
 import type { AuthTokens, User } from '../types';
 
+export interface SavedAccount {
+  email: string;
+  name: string;
+  refresh_token: string;
+}
+
 let cachedJwt: string | null = null;
 let isRefreshing = false;
 let refreshPromise: Promise<string | null> | null = null;
@@ -33,6 +39,54 @@ export async function clearTokens(): Promise<void> {
   await SecureStore.deleteItemAsync(STORAGE_KEYS.JWT);
   await SecureStore.deleteItemAsync(STORAGE_KEYS.REFRESH_TOKEN);
   await SecureStore.deleteItemAsync(STORAGE_KEYS.USER);
+}
+
+export async function getSavedAccounts(): Promise<SavedAccount[]> {
+  try {
+    const raw = await SecureStore.getItemAsync(STORAGE_KEYS.SAVED_ACCOUNTS);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+export async function addSavedAccount(user: User, refreshToken: string): Promise<void> {
+  const accounts = await getSavedAccounts();
+  const existing = accounts.findIndex(a => a.email === user.email);
+  const account: SavedAccount = { email: user.email, name: user.name, refresh_token: refreshToken };
+  if (existing >= 0) {
+    accounts[existing] = account;
+  } else {
+    accounts.unshift(account);
+  }
+  await SecureStore.setItemAsync(STORAGE_KEYS.SAVED_ACCOUNTS, JSON.stringify(accounts));
+}
+
+export async function removeSavedAccount(email: string): Promise<void> {
+  const accounts = await getSavedAccounts();
+  const filtered = accounts.filter(a => a.email !== email);
+  await SecureStore.setItemAsync(STORAGE_KEYS.SAVED_ACCOUNTS, JSON.stringify(filtered));
+}
+
+export async function trySilentLogin(email: string): Promise<{ user: User; tokens: AuthTokens } | null> {
+  const accounts = await getSavedAccounts();
+  const account = accounts.find(a => a.email === email);
+  if (!account?.refresh_token) return null;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${account.refresh_token}`,
+      },
+      body: JSON.stringify({}),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.token && data.user) {
+      return { user: data.user, tokens: { jwt: data.token, refresh_token: data.refresh_token } };
+    }
+    return null;
+  } catch { return null; }
 }
 
 export async function saveUser(user: User): Promise<void> {
