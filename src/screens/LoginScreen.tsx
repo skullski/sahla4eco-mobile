@@ -30,7 +30,7 @@ import { GOOGLE_WEB_CLIENT_ID } from '../constants/api';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const GOOGLE_REDIRECT_URI = 'https://auth.expo.io/@sahla4eco-organization/ssahla4eco';
+const GOOGLE_REDIRECT_URI = 'https://auth.expo.dev/@sahla4eco-organization/ssahla4eco';
 
 export function LoginScreen({ onSwitchToQR }: { onSwitchToQR?: () => void }) {
   const { login, loginGoogle, savedAccounts, removeAccount, silentLogin } = useAuth();
