@@ -29,7 +29,7 @@ import { getStatusLabel } from '../utils/format';
 import { API_BASE_URL } from '../constants/api';
 import type { MobileOrder } from '../types';
 
-const FILTERS = ['all', 'pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
+const FILTERS = ['all', 'pending', 'confirmed', 'shipped', 'in_delivery', 'delivered', 'cancelled'];
 
 const FILTER_ICONS: Record<string, React.ComponentProps<typeof Ionicons>['name']> = {
   all: 'grid-outline',

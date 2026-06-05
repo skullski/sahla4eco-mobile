@@ -3,12 +3,20 @@ import { API_BASE_URL, STORAGE_KEYS } from '../constants/api';
 import type { AuthTokens, User } from '../types';
 
 let cachedJwt: string | null = null;
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
 
 export async function getJwt(): Promise<string | null> {
   if (cachedJwt) return cachedJwt;
   try {
     cachedJwt = await SecureStore.getItemAsync(STORAGE_KEYS.JWT);
     return cachedJwt;
+  } catch { return null; }
+}
+
+async function getRefreshToken(): Promise<string | null> {
+  try {
+    return await SecureStore.getItemAsync(STORAGE_KEYS.REFRESH_TOKEN);
   } catch { return null; }
 }
 
@@ -38,9 +46,41 @@ export async function getSavedUser(): Promise<User | null> {
   } catch { return null; }
 }
 
+async function tryRefreshToken(): Promise<string | null> {
+  const refreshToken = await getRefreshToken();
+  if (!refreshToken) return null;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${refreshToken}`,
+      },
+      body: JSON.stringify({}),
+    });
+
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    if (data.token) {
+      cachedJwt = data.token;
+      await SecureStore.setItemAsync(STORAGE_KEYS.JWT, data.token);
+      if (data.refresh_token) {
+        await SecureStore.setItemAsync(STORAGE_KEYS.REFRESH_TOKEN, data.refresh_token);
+      }
+      return data.token;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export async function apiRequest<T>(
   path: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  _retry = false
 ): Promise<T> {
   const jwt = await getJwt();
   const headers: Record<string, string> = {
@@ -54,7 +94,23 @@ export async function apiRequest<T>(
     headers,
   });
 
-  if (res.status === 401) {
+  if (res.status === 401 && !_retry) {
+    // Try to refresh the token
+    if (!isRefreshing) {
+      isRefreshing = true;
+      refreshPromise = tryRefreshToken();
+    }
+
+    const newJwt = await refreshPromise;
+    isRefreshing = false;
+    refreshPromise = null;
+
+    if (newJwt) {
+      // Retry the request with the new token
+      return apiRequest<T>(path, options, true);
+    }
+
+    // Refresh failed — clear tokens
     cachedJwt = null;
     await clearTokens();
     throw new AuthError('Session expired');

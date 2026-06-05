@@ -46,7 +46,13 @@
       "expo-asset",
       "expo-updates",
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Sahla4Eco to access your camera to scan QR codes for login."
+        }
+      ]
     ],
     "extra": {
       "eas": {

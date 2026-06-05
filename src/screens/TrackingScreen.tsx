@@ -35,6 +35,8 @@ const STATUS_TO_STEP: Record<string, number> = {
   processing: 1,
   shipped: 2,
   in_transit: 2,
+  at_delivery: 3,
+  in_delivery: 3,
   out_for_delivery: 3,
   out_delivery: 3,
   delivered: 4,
@@ -141,7 +143,7 @@ export function TrackingScreen({ navigation }: any) {
 
   const stats = useMemo(() => {
     const inTransit = orders.filter(o =>
-      ['shipped', 'in_transit', 'out_for_delivery', 'out_delivery', 'processing', 'confirmed'].includes(o.status)
+      ['shipped', 'in_transit', 'at_delivery', 'in_delivery', 'out_for_delivery', 'out_delivery', 'processing', 'confirmed'].includes(o.status)
     ).length;
     const delivered = orders.filter(o => o.status === 'delivered').length;
     const problems = orders.filter(o =>
