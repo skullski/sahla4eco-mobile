@@ -46,7 +46,7 @@ export function LoginScreen({ onSwitchToQR }: { onSwitchToQR?: () => void }) {
   const [showPassword, setShowPassword] = useState(false);
   const [accountLoading, setAccountLoading] = useState<string | null>(null);
 
-  const redirectUri = AuthSession.makeRedirectUri();
+  const redirectUri = 'https://auth.expo.dev/@sahla4eco-organization/ssahla4eco';
 
   const [googleRequest, , googlePromptAsync] = AuthSession.useAuthRequest(
     {
