@@ -30,10 +30,7 @@ import { GOOGLE_WEB_CLIENT_ID } from '../constants/api';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const GOOGLE_DISCOVERY = {
-  authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
-  tokenEndpoint: 'https://oauth2.googleapis.com/token',
-};
+const GOOGLE_REDIRECT_URI = 'https://auth.expo.dev/@sahla4eco-organization/ssahla4eco';
 
 export function LoginScreen({ onSwitchToQR }: { onSwitchToQR?: () => void }) {
   const { login, loginGoogle, savedAccounts, removeAccount, silentLogin } = useAuth();
@@ -46,22 +43,6 @@ export function LoginScreen({ onSwitchToQR }: { onSwitchToQR?: () => void }) {
   const [showPassword, setShowPassword] = useState(false);
   const [accountLoading, setAccountLoading] = useState<string | null>(null);
 
-  const redirectUri = 'https://auth.expo.dev/@sahla4eco-organization/ssahla4eco';
-
-  const [googleRequest, , googlePromptAsync] = AuthSession.useAuthRequest(
-    {
-      clientId: GOOGLE_WEB_CLIENT_ID,
-      scopes: ['openid', 'email', 'profile'],
-      redirectUri,
-      responseType: AuthSession.ResponseType.Code,
-      extraParams: {
-        access_type: 'offline',
-        prompt: 'consent',
-      },
-    },
-    GOOGLE_DISCOVERY
-  );
-
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
 
@@ -71,17 +52,6 @@ export function LoginScreen({ onSwitchToQR }: { onSwitchToQR?: () => void }) {
       Animated.timing(slideAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
     ]).start();
   }, []);
-
-  useEffect(() => {
-    if (!googleRequest) return;
-    (async () => {
-      try {
-        const deepLink = await AuthSession.getRedirectUrlAsync();
-        console.log('[google] redirect URI:', deepLink);
-        console.log('[google] request ready:', !!googleRequest);
-      } catch {}
-    })();
-  }, [googleRequest]);
 
   const handleAccountTap = async (accountEmail: string) => {
     setAccountLoading(accountEmail);
@@ -122,26 +92,58 @@ export function LoginScreen({ onSwitchToQR }: { onSwitchToQR?: () => void }) {
   };
 
   const handleGoogle = async () => {
-    if (!googleRequest) {
-      Alert.alert('خطأ', 'جاري تهيئة تسجيل الدخول عبر Google، حاول مرة أخرى');
+    if (GOOGLE_WEB_CLIENT_ID.includes('PLACEHOLDER')) {
+      Alert.alert('غير مُهيّأ', 'تسجيل الدخول عبر Google لم يُضبط بعد على هذا البناء');
       return;
     }
     setGoogleLoading(true);
     try {
-      const result = await googlePromptAsync();
-      if (result.type === 'success' && result.params?.code) {
+      const state = Math.random().toString(36).substring(2);
+      const authUrl =
+        `https://accounts.google.com/o/oauth2/v2/auth` +
+        `?client_id=${GOOGLE_WEB_CLIENT_ID}` +
+        `&redirect_uri=${encodeURIComponent(GOOGLE_REDIRECT_URI)}` +
+        `&response_type=code` +
+        `&scope=openid%20email%20profile` +
+        `&access_type=offline` +
+        `&prompt=consent` +
+        `&state=${state}`;
+
+      const result = await WebBrowser.openAuthSessionAsync(authUrl, GOOGLE_REDIRECT_URI);
+
+      if (result.type === 'success' && result.url) {
+        const url = new URL(result.url);
+        const code = url.searchParams.get('code');
+        const returnedState = url.searchParams.get('state');
+        const error = url.searchParams.get('error');
+
+        if (error) {
+          Alert.alert('خطأ', `رفض Google تسجيل الدخول: ${error}`);
+          setGoogleLoading(false);
+          return;
+        }
+
+        if (!code) {
+          Alert.alert('خطأ', 'لم نستلم رمز التحقق من Google');
+          setGoogleLoading(false);
+          return;
+        }
+
+        if (returnedState !== state) {
+          Alert.alert('خطأ', 'خطأ في التحقق من Google (state mismatch)');
+          setGoogleLoading(false);
+          return;
+        }
+
         try {
-          await loginGoogle(result.params.code);
+          await loginGoogle(code);
           register().catch(() => {});
         } catch (e: any) {
           Alert.alert('خطأ', e.message || 'فشل تسجيل الدخول عبر Google');
         } finally {
           setGoogleLoading(false);
         }
-      } else if (result.type === 'dismiss' || result.type === 'cancel') {
-        setGoogleLoading(false);
       } else {
-        Alert.alert('خطأ', 'فشل تسجيل الدخول عبر Google');
         setGoogleLoading(false);
       }
     } catch (e: any) {
@@ -257,9 +259,9 @@ export function LoginScreen({ onSwitchToQR }: { onSwitchToQR?: () => void }) {
             </View>
 
             <TouchableOpacity
-              style={[styles.googleButton, (googleLoading || !googleRequest) && styles.buttonDisabled]}
+              style={[styles.googleButton, googleLoading && styles.buttonDisabled]}
               onPress={handleGoogle}
-              disabled={googleLoading || !googleRequest}
+              disabled={googleLoading}
             >
               {googleLoading ? (
                 <ActivityIndicator color="#1f2937" />
