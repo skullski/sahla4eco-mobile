@@ -194,7 +194,7 @@ export function LoginScreen({ onSwitchToQR }: { onSwitchToQR?: () => void }) {
             <View style={[styles.inputWrap, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Ionicons name="mail-outline" size={16} color={colors.textMuted} />
               <TextInput
-                style={[styles.input, { color: colors.text }]}
+                style={[styles.input, { color: colors.text, flex: 1 }]}
                 value={email}
                 onChangeText={setEmail}
                 placeholder="البريد الإلكتروني"
