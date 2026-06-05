@@ -14,8 +14,8 @@
  * sign-in here (the web platform handles that).
  * ----------------------------------------------------------------------------
  */
-import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
+import * as AuthSession from 'expo-auth-session';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView,
@@ -30,6 +30,8 @@ import { GOOGLE_WEB_CLIENT_ID } from '../constants/api';
 
 WebBrowser.maybeCompleteAuthSession();
 
+const GOOGLE_REDIRECT_URI = 'https://auth.expo.io/@sahla4eco-organization/ssahla4eco';
+
 export function LoginScreen({ onSwitchToQR }: { onSwitchToQR?: () => void }) {
   const { login, loginGoogle, savedAccounts, removeAccount, silentLogin } = useAuth();
   const { register } = useNotif();
@@ -41,11 +43,6 @@ export function LoginScreen({ onSwitchToQR }: { onSwitchToQR?: () => void }) {
   const [showPassword, setShowPassword] = useState(false);
   const [accountLoading, setAccountLoading] = useState<string | null>(null);
 
-  const [_, googleResponse, googlePromptAsync] = Google.useAuthRequest({
-    webClientId: GOOGLE_WEB_CLIENT_ID,
-    androidClientId: GOOGLE_WEB_CLIENT_ID,
-  });
-
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
 
@@ -55,32 +52,6 @@ export function LoginScreen({ onSwitchToQR }: { onSwitchToQR?: () => void }) {
       Animated.timing(slideAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
     ]).start();
   }, []);
-
-  useEffect(() => {
-    if (googleResponse?.type === 'success') {
-      const idToken = (googleResponse as any).params?.id_token;
-      if (!idToken) {
-        Alert.alert('خطأ', 'لم نستلم رمز التحقق من Google');
-        setGoogleLoading(false);
-        return;
-      }
-      (async () => {
-        try {
-          await loginGoogle(idToken);
-          register().catch(() => {});
-        } catch (e: any) {
-          Alert.alert('خطأ', e.message || 'فشل تسجيل الدخول عبر Google');
-        } finally {
-          setGoogleLoading(false);
-        }
-      })();
-    } else if (googleResponse?.type === 'error') {
-      Alert.alert('خطأ', 'فشل تسجيل الدخول عبر Google');
-      setGoogleLoading(false);
-    } else if (googleResponse?.type === 'dismiss' || googleResponse?.type === 'cancel') {
-      setGoogleLoading(false);
-    }
-  }, [googleResponse]);
 
   const handleAccountTap = async (accountEmail: string) => {
     setAccountLoading(accountEmail);
@@ -128,7 +99,34 @@ export function LoginScreen({ onSwitchToQR }: { onSwitchToQR?: () => void }) {
     }
     setGoogleLoading(true);
     try {
-      await googlePromptAsync();
+      const nonce = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_WEB_CLIENT_ID}&redirect_uri=${encodeURIComponent(GOOGLE_REDIRECT_URI)}&response_type=id_token&scope=openid%20email%20profile&nonce=${nonce}`;
+
+      const result = await WebBrowser.openAuthSessionAsync(authUrl, GOOGLE_REDIRECT_URI);
+
+      if (result.type === 'success' && result.url) {
+        const url = result.url;
+        const fragment = url.includes('#') ? url.split('#')[1] : '';
+        const params = new URLSearchParams(fragment);
+        const idToken = params.get('id_token');
+
+        if (!idToken) {
+          Alert.alert('خطأ', 'لم نستلم رمز التحقق من Google');
+          setGoogleLoading(false);
+          return;
+        }
+
+        try {
+          await loginGoogle(idToken);
+          register().catch(() => {});
+        } catch (e: any) {
+          Alert.alert('خطأ', e.message || 'فشل تسجيل الدخول عبر Google');
+        } finally {
+          setGoogleLoading(false);
+        }
+      } else {
+        setGoogleLoading(false);
+      }
     } catch (e: any) {
       Alert.alert('خطأ', e?.message || 'تعذر فتح شاشة Google');
       setGoogleLoading(false);
