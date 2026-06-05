@@ -180,7 +180,7 @@ export function TrackingScreen({ navigation }: any) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Inline header */}
-      <View style={[styles.inlineHeader, { backgroundColor: colors.primary, paddingTop: insets.top + 4 }]}>
+      <View style={[styles.inlineHeader, { backgroundColor: colors.primary, paddingTop: insets.top }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="arrow-forward" size={20} color="#fff" />
         </TouchableOpacity>

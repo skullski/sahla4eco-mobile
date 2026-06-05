@@ -79,7 +79,7 @@ export function DashboardScreen({ navigation }: any) {
       }
     >
       {/* Header with gradient */}
-      <View style={[styles.header, { backgroundColor: colors.primary, paddingTop: insets.top + 4 }]}>
+      <View style={[styles.header, { backgroundColor: colors.primary, paddingTop: insets.top }]}>
         <View style={styles.headerContent}>
           <View style={styles.headerLeft}>
             <Text style={styles.greeting}>مرحباً، {user?.name || 'المالك'}</Text>
@@ -254,9 +254,9 @@ const styles = StyleSheet.create({
   content: { paddingBottom: 32 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
-    paddingTop: 4,
+    paddingTop: 0,
     paddingHorizontal: 16,
-    paddingBottom: 8,
+    paddingBottom: 20,
     borderBottomLeftRadius: 18,
     borderBottomRightRadius: 18,
     overflow: 'hidden',
@@ -270,13 +270,13 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   headerLeft: { flex: 1 },
-  greeting: { fontSize: FONT.md, fontWeight: '800', color: '#fff' },
-  storeName: { fontSize: FONT.xs, color: 'rgba(255,255,255,0.7)', marginTop: 1 },
+  greeting: { fontSize: FONT.lg, fontWeight: '800', color: '#fff' },
+  storeName: { fontSize: FONT.sm, color: 'rgba(255,255,255,0.7)', marginTop: 1 },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   notifBtn: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
   badge: { position: 'absolute', top: -3, right: -3, minWidth: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 },
   badgeText: { color: '#fff', fontSize: 8, fontWeight: '800' },
-  statsGrid: { paddingHorizontal: 16, marginTop: -16 },
+  statsGrid: { paddingHorizontal: 16, marginTop: -8 },
   statsRow: { flexDirection: 'row' },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 10 },
   sectionTitle: { fontSize: FONT.lg, fontWeight: '700' },

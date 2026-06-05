@@ -151,7 +151,7 @@ export function OrdersScreen({ navigation, route }: any) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Inline header */}
-      <View style={[styles.inlineHeader, { backgroundColor: colors.primary, paddingTop: insets.top + 4 }]}>
+      <View style={[styles.inlineHeader, { backgroundColor: colors.primary, paddingTop: insets.top }]}>
         <Text style={[styles.inlineTitle, { color: '#fff' }]}>الطلبات</Text>
         <TouchableOpacity onPress={() => navigation.navigate('Tracking')}>
           <Ionicons name="car-outline" size={22} color="#fff" />

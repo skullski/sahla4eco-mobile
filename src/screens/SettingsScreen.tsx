@@ -68,7 +68,7 @@ export function SettingsScreen({ navigation }: any) {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.primary, paddingTop: insets.top + 4 }]}>
+      <View style={[styles.header, { backgroundColor: colors.primary, paddingTop: insets.top }]}>
         <Text style={styles.headerTitle}>الإعدادات</Text>
       </View>
 
@@ -215,7 +215,7 @@ export function SettingsScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  header: { paddingHorizontal: 16, paddingVertical: 8, borderBottomLeftRadius: 16, borderBottomRightRadius: 16 },
+  header: { paddingHorizontal: 16, paddingVertical: 10, borderBottomLeftRadius: 16, borderBottomRightRadius: 16 },
   headerTitle: { fontSize: FONT.lg, fontWeight: '800', color: '#fff' },
   content: { padding: 16, paddingBottom: 40 },
   profileCard: {
