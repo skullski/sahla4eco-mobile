@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   inlineHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 16, paddingTop: 4, paddingBottom: 8,
+    paddingHorizontal: 16, paddingTop: 4, paddingBottom: 6,
   },
   inlineTitle: { fontSize: FONT.lg, fontWeight: '800' },
   searchWrap: {

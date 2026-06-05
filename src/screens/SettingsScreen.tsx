@@ -215,8 +215,8 @@ export function SettingsScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  header: { paddingHorizontal: 16, paddingVertical: 10, borderBottomLeftRadius: 16, borderBottomRightRadius: 16 },
-  headerTitle: { fontSize: FONT.xl, fontWeight: '800', color: '#fff' },
+  header: { paddingHorizontal: 16, paddingVertical: 8, borderBottomLeftRadius: 16, borderBottomRightRadius: 16 },
+  headerTitle: { fontSize: FONT.lg, fontWeight: '800', color: '#fff' },
   content: { padding: 16, paddingBottom: 40 },
   profileCard: {
     flexDirection: 'row', alignItems: 'center', gap: 14,

@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   inlineHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4,
+    paddingHorizontal: 16, paddingTop: 6, paddingBottom: 4,
   },
   inlineTitle: { fontSize: FONT.lg, fontWeight: '800' },
   backBtn: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },

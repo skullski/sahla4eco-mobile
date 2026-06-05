@@ -119,9 +119,9 @@ export function NotificationsScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingHorizontal: 16, paddingVertical: 10, borderBottomLeftRadius: 16, borderBottomRightRadius: 16 },
+  header: { paddingHorizontal: 16, paddingVertical: 8, borderBottomLeftRadius: 16, borderBottomRightRadius: 16 },
   headerContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  headerTitle: { fontSize: FONT.xl, fontWeight: '800', color: '#fff' },
+  headerTitle: { fontSize: FONT.lg, fontWeight: '800', color: '#fff' },
   markAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: RADIUS.sm },
   markAllText: { fontSize: FONT.xs, fontWeight: '600', color: '#fff' },
   notifRow: {
