@@ -43,8 +43,6 @@ export function LoginScreen({ onSwitchToQR }: { onSwitchToQR?: () => void }) {
 
   const [_, googleResponse, googlePromptAsync] = Google.useAuthRequest({
     webClientId: GOOGLE_WEB_CLIENT_ID,
-    iosClientId: GOOGLE_WEB_CLIENT_ID,
-    androidClientId: GOOGLE_WEB_CLIENT_ID,
   });
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
