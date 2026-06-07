@@ -15,25 +15,22 @@
  * ----------------------------------------------------------------------------
  */
 import * as WebBrowser from 'expo-web-browser';
-import * as AuthSession from 'expo-auth-session';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView,
-  Platform, ActivityIndicator, Alert, Animated, ScrollView,
+  Platform, ActivityIndicator, Alert, Animated, ScrollView, Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotif } from '../hooks/usePushNotifications';
 import { useColors } from '../contexts/ThemeContext';
 import { RADIUS, FONT } from '../constants/theme';
-import { GOOGLE_WEB_CLIENT_ID } from '../constants/api';
+import { GOOGLE_WEB_CLIENT_ID, API_BASE_URL } from '../constants/api';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const GOOGLE_REDIRECT_URI = 'https://auth.expo.io/@sahla4eco-organization/ssahla4eco';
-
 export function LoginScreen({ onSwitchToQR }: { onSwitchToQR?: () => void }) {
-  const { login, loginGoogle, savedAccounts, removeAccount, silentLogin } = useAuth();
+  const { login, savedAccounts, removeAccount, silentLogin } = useAuth();
   const { register } = useNotif();
   const colors = useColors();
   const [email, setEmail] = useState('');
@@ -98,56 +95,17 @@ export function LoginScreen({ onSwitchToQR }: { onSwitchToQR?: () => void }) {
     }
     setGoogleLoading(true);
     try {
-      const state = Math.random().toString(36).substring(2);
-      const authUrl =
-        `https://accounts.google.com/o/oauth2/v2/auth` +
-        `?client_id=${GOOGLE_WEB_CLIENT_ID}` +
-        `&redirect_uri=${encodeURIComponent(GOOGLE_REDIRECT_URI)}` +
-        `&response_type=code` +
-        `&scope=openid%20email%20profile` +
-        `&access_type=offline` +
-        `&prompt=consent` +
-        `&state=${state}`;
-
-      const result = await WebBrowser.openAuthSessionAsync(authUrl, GOOGLE_REDIRECT_URI);
-
-      if (result.type === 'success' && result.url) {
-        const url = new URL(result.url);
-        const code = url.searchParams.get('code');
-        const returnedState = url.searchParams.get('state');
-        const error = url.searchParams.get('error');
-
-        if (error) {
-          Alert.alert('خطأ', `رفض Google تسجيل الدخول: ${error}`);
-          setGoogleLoading(false);
-          return;
-        }
-
-        if (!code) {
-          Alert.alert('خطأ', 'لم نستلم رمز التحقق من Google');
-          setGoogleLoading(false);
-          return;
-        }
-
-        if (returnedState !== state) {
-          Alert.alert('خطأ', 'خطأ في التحقق من Google (state mismatch)');
-          setGoogleLoading(false);
-          return;
-        }
-
-        try {
-          await loginGoogle(code);
-          register().catch(() => {});
-        } catch (e: any) {
-          Alert.alert('خطأ', e.message || 'فشل تسجيل الدخول عبر Google');
-        } finally {
-          setGoogleLoading(false);
-        }
-      } else {
+      const resp = await fetch(`${API_BASE_URL}/api/oauth/google/url?client=mobile`);
+      const data = await resp.json();
+      if (!data.url) {
+        Alert.alert('خطأ', 'تعذر الحصول على رابط تسجيل الدخول');
         setGoogleLoading(false);
+        return;
       }
+      await Linking.openURL(data.url);
     } catch (e: any) {
       Alert.alert('خطأ', e?.message || 'تعذر فتح شاشة Google');
+    } finally {
       setGoogleLoading(false);
     }
   };

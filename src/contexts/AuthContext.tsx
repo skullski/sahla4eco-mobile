@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getSavedUser, getJwt, clearTokens, getSavedAccounts, addSavedAccount, removeSavedAccount, trySilentLogin, SavedAccount } from '../api/client';
+import { getSavedUser, getJwt, clearTokens, getSavedAccounts, addSavedAccount, removeSavedAccount, trySilentLogin, setTokens, saveUser, SavedAccount } from '../api/client';
 import { loginWithEmail, loginWithQR, loginWithGoogle, logout as apiLogout } from '../api/auth';
 import type { User } from '../types';
 
@@ -10,7 +10,8 @@ interface AuthContextType {
   getAccessToken: () => Promise<string | null>;
   login: (email: string, password: string) => Promise<void>;
   loginQR: (token: string) => Promise<void>;
-  loginGoogle: (code: string) => Promise<void>;
+  loginGoogle: (code: string, redirectUri?: string) => Promise<void>;
+  loginOAuthToken: (token: string, user: User) => Promise<void>;
   logout: () => Promise<void>;
   savedAccounts: SavedAccount[];
   refreshSavedAccounts: () => Promise<void>;
@@ -60,13 +61,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [refreshSavedAccounts]);
 
-  const loginGoogle = useCallback(async (idToken: string) => {
-    const result = await loginWithGoogle(idToken);
+  const loginGoogle = useCallback(async (idToken: string, redirectUri?: string) => {
+    const result = await loginWithGoogle(idToken, redirectUri);
     setUser(result.user);
     if (result.tokens.refresh_token) {
       await addSavedAccount(result.user, result.tokens.refresh_token);
       await refreshSavedAccounts();
     }
+  }, [refreshSavedAccounts]);
+
+  const loginOAuthToken = useCallback(async (token: string, oauthUser: User) => {
+    await setTokens({ jwt: token });
+    await saveUser(oauthUser);
+    setUser(oauthUser);
+    await refreshSavedAccounts();
   }, [refreshSavedAccounts]);
 
   const logout = useCallback(async () => {
@@ -91,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, isLoading, isAuthenticated: !!user, getAccessToken, login, loginQR, loginGoogle, logout, savedAccounts, refreshSavedAccounts, removeAccount, silentLogin }}
+      value={{ user, isLoading, isAuthenticated: !!user, getAccessToken, login, loginQR, loginGoogle, loginOAuthToken, logout, savedAccounts, refreshSavedAccounts, removeAccount, silentLogin }}
     >
       {children}
     </AuthContext.Provider>

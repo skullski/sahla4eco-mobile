@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, ActivityIndicator, StyleSheet, useColorScheme } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, useColorScheme, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Updates from 'expo-updates';
 import * as SecureStore from 'expo-secure-store';
@@ -15,13 +15,34 @@ import { LoginScreen } from './src/screens/LoginScreen';
 import { QRLoginScreen } from './src/screens/QRLoginScreen';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { FONT } from './src/constants/theme';
+import type { User } from './src/types';
 
 const THEME_KEY = 'sahla_theme_pref';
 
 function RootNavigator() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, loginOAuthToken } = useAuth();
   const { colors } = useTheme();
   const [authScreen, setAuthScreen] = useState<'email' | 'qr'>('email');
+
+  useEffect(() => {
+    const handleDeepLink = (event: { url: string }) => {
+      const url = new URL(event.url);
+      if (url.protocol === 'sahla4eco:' && url.hostname === 'auth') {
+        const token = url.searchParams.get('token');
+        const userStr = url.searchParams.get('user');
+        if (token && userStr) {
+          try {
+            const userData = JSON.parse(decodeURIComponent(userStr)) as User;
+            loginOAuthToken(token, userData);
+          } catch {}
+        }
+      }
+    };
+    Linking.addEventListener('url', handleDeepLink);
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLink({ url });
+    });
+  }, []);
 
   if (isLoading) {
     return (

@@ -94,9 +94,10 @@ export async function logout(): Promise<void> {
   await clearTokens();
 }
 
-export async function loginWithGoogle(code: string): Promise<{ user: User; tokens: AuthTokens }> {
+export async function loginWithGoogle(code: string, redirectUri?: string): Promise<{ user: User; tokens: AuthTokens }> {
   const data = await apiPost<{ token: string; refresh_token?: string; user: User }>('/api/auth/google', {
     code,
+    redirect_uri: redirectUri,
   });
   const tokens: AuthTokens = { jwt: data.token, refresh_token: data.refresh_token };
   await setTokens(tokens);
